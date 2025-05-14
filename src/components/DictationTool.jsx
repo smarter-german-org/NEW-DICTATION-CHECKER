@@ -279,9 +279,11 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
       
       // Add placeholders for prefix characters
       for (let i = 0; i < startPos; i++) {
+        const expectedChar = expected[i];
         chars.push({
           type: 'char-placeholder',
-          text: '_'
+          // Always preserve punctuation characters rather than using underscore
+          text: isPunctuation(expectedChar) ? expectedChar : '_'
         });
       }
       
@@ -304,9 +306,11 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
       
       // Add placeholders for suffix characters
       for (let i = startPos + actual.length; i < expected.length; i++) {
+        const expectedChar = expected[i];
         chars.push({
           type: 'char-placeholder',
-          text: '_'
+          // Always preserve punctuation characters rather than using underscore
+          text: isPunctuation(expectedChar) ? expectedChar : '_'
         });
       }
       
@@ -386,10 +390,10 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
           });
           offsetActual++; // Move both pointers
         } else {
-          // Missing punctuation
+          // Missing punctuation - always show the actual punctuation character
           chars.push({
             type: 'char-placeholder',
-            text: charExpected // Use the actual punctuation mark instead of underscore
+            text: charExpected // Always display the punctuation character, never underscore
           });
         }
         offsetExpected++;
@@ -398,10 +402,12 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
       
       // If we've reached the end of the actual text
       if (offsetActual >= actualChars.length) {
-        // User hasn't typed this character yet - use underscore placeholder
+        // User hasn't typed this character yet
+        const expectedChar = expectedChars[offsetExpected];
         chars.push({
           type: 'char-placeholder',
-          text: '_'
+          // Always preserve punctuation characters rather than using underscore
+          text: isPunctuation(expectedChar) ? expectedChar : '_'
         });
         offsetExpected++;
         continue;
