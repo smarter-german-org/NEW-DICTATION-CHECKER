@@ -1319,6 +1319,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
           onPlayStateChange={handleAudioPlayStateChange}
           checkCapitalization={checkCapitalization}
           onToggleCapitalization={() => setCheckCapitalization(prev => !prev)}
+          onEnded={() => playCurrentSentence(currentSentenceIndex)}
         />
       </div>
       

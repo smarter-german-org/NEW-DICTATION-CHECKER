@@ -47,6 +47,16 @@ const AudioPlayer = forwardRef(({
     },
     getDuration: () => {
       return audioRef.current ? audioRef.current.duration : 0;
+    },
+    repeatSentence: () => {
+      if (audioRef.current && isLoaded) {
+        if (onEnded) {
+          audioRef.current.pause();
+          onEnded();
+          return true;
+        }
+        return false;
+      }
     }
   }));
   
@@ -98,6 +108,22 @@ const AudioPlayer = forwardRef(({
   const handleReset = () => {
     if (!isLoaded) return;
     audioRef.current.currentTime = 0;
+  };
+  
+  const handleRepeatSentence = () => {
+    if (!isLoaded) return;
+    
+    // Instead of just resetting and playing,
+    // use the callback to let the parent handle repeating properly
+    if (onEnded) {
+      // Signal to the parent component to handle the repeat
+      audioRef.current.pause();
+      onEnded();
+    } else {
+      // Fallback if no parent handler
+      audioRef.current.currentTime = 0;
+      audioRef.current.play();
+    }
   };
   
   const handleProgressClick = (e) => {
@@ -162,18 +188,6 @@ const AudioPlayer = forwardRef(({
           </button>
           
           <button 
-            className="control-button" 
-            onClick={handleReset}
-            disabled={!isLoaded}
-            title="Reset"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 4l-4 4 4 4" />
-              <path d="M14 8h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h3" />
-            </svg>
-          </button>
-          
-          <button 
             className="play-button" 
             onClick={handlePlayPause}
             disabled={!isLoaded}
@@ -226,6 +240,19 @@ const AudioPlayer = forwardRef(({
               title={`Case Sensitivity: ${checkCapitalization ? 'Strict (Hard Mode)' : 'Relaxed (Normal Mode)'}`}
             >
               Aa
+            </button>
+            
+            <button 
+              className="option-toggle"
+              onClick={handleRepeatSentence}
+              title="Repeat Current Sentence"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 4v6h-6" />
+                <path d="M1 20v-6h6" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
+                <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14" />
+              </svg>
             </button>
           </div>
         </div>
