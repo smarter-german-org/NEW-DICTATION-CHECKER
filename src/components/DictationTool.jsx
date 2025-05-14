@@ -1330,12 +1330,30 @@ const DictationTool = ({ exerciseId = 1 }) => {
           Keyboard Shortcuts
         </button>
         <div className={`shortcuts-panel ${showShortcuts ? 'show' : ''}`}>
-          <ul>
-            <li><kbd>{modifierKeySymbol}</kbd> + <kbd>Enter</kbd>: Play/Pause</li>
-            <li><kbd>{modifierKeySymbol}</kbd> + <kbd>←</kbd>: Previous sentence</li>
-            <li><kbd>{modifierKeySymbol}</kbd> + <kbd>→</kbd>: Next sentence</li>
-            <li><kbd>{modifierKeySymbol}</kbd> + <kbd>↑</kbd>: Repeat current sentence</li>
-          </ul>
+          <div className="shortcut-row">
+            <div className="shortcut-keys">
+              <kbd>{modifierKeySymbol}</kbd> + <kbd>Enter</kbd>
+            </div>
+            <div className="shortcut-description">: Play/Pause</div>
+          </div>
+          <div className="shortcut-row">
+            <div className="shortcut-keys">
+              <kbd>{modifierKeySymbol}</kbd> + <kbd>←</kbd>
+            </div>
+            <div className="shortcut-description">: Previous sentence</div>
+          </div>
+          <div className="shortcut-row">
+            <div className="shortcut-keys">
+              <kbd>{modifierKeySymbol}</kbd> + <kbd>→</kbd>
+            </div>
+            <div className="shortcut-description">: Next sentence</div>
+          </div>
+          <div className="shortcut-row">
+            <div className="shortcut-keys">
+              <kbd>{modifierKeySymbol}</kbd> + <kbd>↑</kbd>
+            </div>
+            <div className="shortcut-description">: Repeat current sentence</div>
+          </div>
         </div>
       </div>
       

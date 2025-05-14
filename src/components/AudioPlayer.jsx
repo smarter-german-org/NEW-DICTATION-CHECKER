@@ -12,7 +12,6 @@ const AudioPlayer = forwardRef(({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [infiniteLoop, setInfiniteLoop] = useState(false);
   
   const audioRef = useRef(null);
   const progressRef = useRef(null);
@@ -125,19 +124,7 @@ const AudioPlayer = forwardRef(({
   const handleAudioEnded = () => {
     setIsPlaying(false);
     
-    // Only handle infinite loop internally if onEnded isn't provided
-    // This allows the parent component to control looping behavior
-    if (infiniteLoop && !onEnded) {
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play()
-          .then(() => {
-            setIsPlaying(true);
-            if (onPlayStateChange) onPlayStateChange(true);
-          })
-          .catch(error => console.error('Playback failed after loop:', error));
-      }
-    } else if (onEnded) {
+    if (onEnded) {
       onEnded();
     }
   };
@@ -146,11 +133,6 @@ const AudioPlayer = forwardRef(({
     const playing = audioRef.current && !audioRef.current.paused;
     setIsPlaying(playing);
     if (onPlayStateChange) onPlayStateChange(playing);
-  };
-
-  const toggleInfiniteLoop = () => {
-    // Only toggle infinite loop state, don't affect playback
-    setInfiniteLoop(prev => !prev);
   };
   
   return (
@@ -163,7 +145,7 @@ const AudioPlayer = forwardRef(({
         onEnded={handleAudioEnded}
         onPlay={handlePlayingState}
         onPause={handlePlayingState}
-        loop={false} /* Important: disable HTML5 loop attribute */
+        loop={false}
       />
       
       <div className="player-container">
@@ -244,14 +226,6 @@ const AudioPlayer = forwardRef(({
               title={`Case Sensitivity: ${checkCapitalization ? 'Strict (Hard Mode)' : 'Relaxed (Normal Mode)'}`}
             >
               Aa
-            </button>
-            
-            <button 
-              className={`option-toggle ${infiniteLoop ? 'active' : ''}`}
-              onClick={toggleInfiniteLoop}
-              title={infiniteLoop ? "Infinite loop enabled" : "Infinite loop disabled"}
-            >
-              ∞
             </button>
           </div>
         </div>
