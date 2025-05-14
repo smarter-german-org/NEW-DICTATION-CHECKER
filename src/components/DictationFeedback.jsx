@@ -25,18 +25,17 @@ const DictationFeedback = ({
     const totalSentences = sentenceResults.length;
     const completedSentences = sentenceResults.filter(Boolean).length;
 
-    // Count completed and correct words
-    let totalWords = 0;
+    // Count total words in the entire expected text
+    let totalWords = dictationResults.totalWordsInAllText || 0;
     let completedWords = 0;
     let correctWords = 0;
     let incorrectWords = 0;
 
-    sentenceResults.forEach(result => {
+    // Process the sentences that have been attempted
+    sentenceResults.forEach((result, index) => {
       if (result) {
-        const expectedWordCount = result.expected.split(/\s+/).filter(Boolean).length;
+        // Count words in the user's input
         const actualWordCount = result.actual.split(/\s+/).filter(Boolean).length;
-        
-        totalWords += expectedWordCount;
         completedWords += actualWordCount;
         
         if (result.isCorrect) {

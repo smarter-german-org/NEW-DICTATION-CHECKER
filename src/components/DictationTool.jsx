@@ -635,9 +635,12 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
             const isAtEnd = index === diff.length - 1 || 
               (index === diff.length - 3 && diff[diff.length - 1].type === 'space' && diff[diff.length - 2].type === 'extra');
             
+            // Add a non-breaking space character before the extra word if it's not at the beginning
+            const needsSpace = index > 0 && diff[index-1]?.type !== 'space';
+            
             return (
               <span key={index} className={`word-extra ${isAtEnd ? 'word-extra-hidden' : ''}`}>
-                {item.text}
+                {needsSpace && ' '}{item.text}
               </span>
             );
           case 'space':
@@ -1479,7 +1482,22 @@ const DictationTool = ({ exerciseId = 1 }) => {
   const prepareResultsData = () => {
     // Calculate various statistics for the feedback
     const totalSentences = sentences.length;
-    const completedSentences = sentenceResults.filter(Boolean).length;
+    
+    // Get all sentences with their results, including empty results for skipped sentences
+    const allSentenceResults = [...sentenceResults];
+    
+    // Ensure we have entries for all sentences (even if user skipped some)
+    while (allSentenceResults.length < sentences.length) {
+      allSentenceResults.push(null);
+    }
+    
+    // Record how many sentences the user actually completed
+    const completedSentences = allSentenceResults.filter(Boolean).length;
+    
+    // Count total words in ALL sentences from the VTT file
+    const totalWordsInAllText = sentences.reduce((total, sentence) => {
+      return total + sentence.text.split(/\s+/).filter(Boolean).length;
+    }, 0);
     
     // Extract words for comparison
     const allWords = sentences.flatMap(sentence => 
@@ -1499,7 +1517,8 @@ const DictationTool = ({ exerciseId = 1 }) => {
       completedSentences,
       allWords,
       userWords,
-      correctWords
+      correctWords,
+      totalWordsInAllText
     });
   };
   

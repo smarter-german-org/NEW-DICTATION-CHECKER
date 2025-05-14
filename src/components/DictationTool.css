@@ -189,6 +189,9 @@
   color: #ff5252;
   opacity: 0.8;
   text-decoration: line-through;
+  margin-left: 4px;
+  margin-right: 4px;
+  padding: 0 2px;
 }
 
 .word-extra-hidden {
