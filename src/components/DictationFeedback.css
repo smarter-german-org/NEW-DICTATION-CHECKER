@@ -69,6 +69,7 @@
   flex-direction: row;
   gap: 20px;
   margin-bottom: 30px;
+  justify-content: center;
 }
 
 @media (max-width: 768px) {
@@ -81,6 +82,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  max-width: 800px;
+  width: 100%;
 }
 
 .comparison-column h3 {
@@ -120,12 +123,108 @@
 
 .highlighted-text.user .word.incorrect {
   color: #dc3545;
-  text-decoration: underline wavy #dc3545;
+  text-decoration: line-through;
+  position: relative;
+  background-color: rgba(255, 0, 0, 0.05);
 }
 
 .highlighted-text .empty-text {
   color: #999;
   font-style: italic;
+}
+
+/* Word styles */
+.user-sentence {
+  line-height: 1.6;
+  padding: 4px 0;
+}
+
+.word {
+  display: inline-block;
+  padding: 2px 4px;
+  margin: 0 2px;
+  border-radius: 3px;
+}
+
+.word.correct {
+  color: #28a745; /* Green */
+}
+
+.word.incorrect {
+  color: #dc3545; /* Red */
+  text-decoration: line-through;
+  position: relative;
+  background-color: rgba(255, 0, 0, 0.05);
+}
+
+.word.compound-part {
+  color: #f46f07; /* Orange */
+  text-decoration: underline dotted #f46f07;
+  cursor: help;
+  position: relative;
+}
+
+.word-placeholder {
+  display: inline-block;
+  color: #8c8c8c;
+  padding: 2px 4px;
+  margin: 0 2px;
+  letter-spacing: 1px;
+  cursor: help;
+  position: relative;
+}
+
+.word-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background-color: #444;
+  color: #fff;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  margin-bottom: 5px;
+  min-width: max-content;
+  max-width: 250px;
+}
+
+.word-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #444 transparent transparent transparent;
+}
+
+.word-tooltip-left {
+  left: 0;
+  transform: translateX(0) translateY(-10px);
+}
+
+.word-tooltip-left::after {
+  left: 15px;
+  margin-left: 0;
+}
+
+.sentence-placeholder {
+  color: #999;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+.skipped-indicator {
+  display: inline-block;
+  background-color: #f8f9fa;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
 }
 
 /* Restart button */

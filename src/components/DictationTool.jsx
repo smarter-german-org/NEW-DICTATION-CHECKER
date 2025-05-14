@@ -884,9 +884,10 @@ const DictationTool = ({ exerciseId = 1 }) => {
     // Focus input when audio stops playing or when exercise starts
     if (exerciseStarted && inputRef.current) {
       if (!isPlaying) {
+        // Only focus if the audio has stopped naturally (not from keyboard events)
         // Use a short timeout to ensure DOM is ready
         setTimeout(() => {
-          if (inputRef.current) {
+          if (inputRef.current && !isPlaying) {
             inputRef.current.focus();
             console.log('[FOCUS]', 'Input field focused after audio stopped');
             setWaitingForInput(true);
@@ -1038,6 +1039,11 @@ const DictationTool = ({ exerciseId = 1 }) => {
     // Use the appropriate modifier key based on platform
     const isModifierKeyPressed = isMac ? e.metaKey : e.ctrlKey;
     
+    // Only handle key events when we're not playing audio
+    if (isPlaying) {
+      return; // Don't process keypresses while audio is playing
+    }
+    
     if (e.key === 'Enter' && !isModifierKeyPressed && !navigationInProgress && !isPlaying) {
       e.preventDefault(); // Prevent default Enter behavior that might trigger audio skip
       console.log('[ENTER KEY PRESSED]', {
@@ -1070,49 +1076,30 @@ const DictationTool = ({ exerciseId = 1 }) => {
     }
     
     setWaitingForInput(false);
+    setIsPlaying(true);
     
     const currentSentence = sentences[indexToPlay];
     
     if (audioRef.current) {
-      console.log("Playing sentence at index:", indexToPlay, "starting at time:", currentSentence.startTime);
+      console.log("Playing sentence at index:", indexToPlay, "starting at time:", currentSentence.startTime, "ending at:", currentSentence.endTime);
       
-      // Make sure audio is in stopped state first
-      audioRef.current.pause();
-      
-      // Set the current time to the start of the sentence
-      audioRef.current.seekTo(currentSentence.startTime);
-      
-      // Play the audio
-      audioRef.current.play();
-      setIsPlaying(true);
-      
-      // Set a timeout to pause at the end of the sentence
-      const duration = (currentSentence.endTime - currentSentence.startTime) * 1000;
-      console.log("Sentence duration (ms):", duration);
-      
-      // Clear any existing timeout first (redundant check but important)
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      try {
+        // Make sure audio is in stopped state first
+        audioRef.current.pause();
+        
+        // Set the current time to the start of the sentence
+        audioRef.current.seekTo(currentSentence.startTime);
+        
+        // Set the end time for the current sentence
+        audioRef.current.setCurrentSentenceEndTime(currentSentence.endTime);
+        
+        // Start playback
+        audioRef.current.play();
+        
+      } catch (error) {
+        console.error("Error in audio playback:", error);
+        setIsPlaying(false);
       }
-      
-      timeoutRef.current = setTimeout(() => {
-        console.log("Sentence playback finished, pausing audio");
-        if (audioRef.current) {
-          audioRef.current.pause();
-          setIsPlaying(false);
-          
-          // Focus the input field
-          setTimeout(() => {
-            if (inputRef.current) {
-              inputRef.current.focus();
-              // Always set waiting for input when audio finishes
-              setWaitingForInput(true);
-              console.log('[FOCUS]', 'Input field focused after audio stopped');
-            }
-          }, 100);
-        }
-        timeoutRef.current = null;
-      }, duration);
     }
   };
 
@@ -1356,6 +1343,17 @@ const DictationTool = ({ exerciseId = 1 }) => {
       console.log('[AUTO START]', 'Starting exercise from audio play');
       startExercise();
     }
+    
+    // When audio stops, focus the input field
+    if (!isAudioPlaying && exerciseStarted) {
+      console.log('[AUDIO STOPPED]', 'Audio playback stopped, focusing input field');
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          setWaitingForInput(true);
+        }
+      }, 100);
+    }
   };
   
   // Extract the startExercise logic into a separate function for reuse
@@ -1575,7 +1573,16 @@ const DictationTool = ({ exerciseId = 1 }) => {
           onPlayStateChange={handleAudioPlayStateChange}
           checkCapitalization={checkCapitalization}
           onToggleCapitalization={() => setCheckCapitalization(prev => !prev)}
-          onEnded={() => playCurrentSentence(currentSentenceIndex)}
+          onEnded={() => {
+            console.log("[AUDIO ENDED]", "Audio has reached the end of a sentence");
+            setIsPlaying(false);
+            if (inputRef.current) {
+              setTimeout(() => {
+                inputRef.current.focus();
+                setWaitingForInput(true);
+              }, 100);
+            }
+          }}
           onPrevious={handlePreviousSentence}
           onNext={() => goToNextSentence(true)}
           onCancel={handleCancelExercise}

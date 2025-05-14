@@ -16,13 +16,34 @@ const AudioPlayer = forwardRef(({
   const [duration, setDuration] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   
+  // Track current sentence boundaries using refs
+  const sentenceEndTimeRef = useRef(null);
+  // Add flag to prevent multiple callbacks
+  const endEventProcessedRef = useRef(false);
+  
   const audioRef = useRef(null);
   const progressRef = useRef(null);
+  
+  // Handle audio source change
+  useEffect(() => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+    setIsLoaded(false);
+    
+    // Reset audio element
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current.load();
+    }
+  }, [audioSrc]);
   
   // Expose audio methods to parent component
   useImperativeHandle(ref, () => ({
     play: () => {
       if (audioRef.current && isLoaded) {
+        endEventProcessedRef.current = false;
         audioRef.current.play();
       }
     },
@@ -41,9 +62,21 @@ const AudioPlayer = forwardRef(({
       if (audioRef.current && isLoaded) {
         audioRef.current.currentTime = timeInSeconds;
         setCurrentTime(timeInSeconds);
+        // Reset the processed flag when seeking to a new position
+        endEventProcessedRef.current = false;
+        
+        // When seeking to a new sentence start, we need to know where it ends
+        // This will be set by the parent component through the setCurrentSentenceEndTime method
         return true;
       }
       return false;
+    },
+    setCurrentSentenceEndTime: (endTimeInSeconds) => {
+      // Store the end time of the current sentence
+      sentenceEndTimeRef.current = endTimeInSeconds;
+      // Reset the processed flag when setting a new end time
+      endEventProcessedRef.current = false;
+      console.log("Set sentence end time to:", endTimeInSeconds);
     },
     getCurrentTime: () => {
       return audioRef.current ? audioRef.current.currentTime : 0;
@@ -55,6 +88,7 @@ const AudioPlayer = forwardRef(({
       if (audioRef.current && isLoaded) {
         if (onEnded) {
           audioRef.current.pause();
+          endEventProcessedRef.current = false;
           onEnded();
           return true;
         }
@@ -62,21 +96,6 @@ const AudioPlayer = forwardRef(({
       }
     }
   }));
-  
-  // Handle audio source change
-  useEffect(() => {
-    setIsPlaying(false);
-    setCurrentTime(0);
-    setDuration(0);
-    setIsLoaded(false);
-    
-    // Reset audio element
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current.load();
-    }
-  }, [audioSrc]);
   
   // Format time to MM:SS
   const formatTime = (seconds) => {
@@ -147,7 +166,37 @@ const AudioPlayer = forwardRef(({
   
   const handleTimeUpdate = () => {
     if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
+      const currentAudioTime = audioRef.current.currentTime;
+      setCurrentTime(currentAudioTime);
+      
+      // Check if we've reached the end of the current sentence
+      if (sentenceEndTimeRef.current !== null && 
+          currentAudioTime >= sentenceEndTimeRef.current && 
+          !endEventProcessedRef.current) {  // Only process if not already handled
+        
+        console.log("Reached sentence end time:", sentenceEndTimeRef.current, "current time:", currentAudioTime);
+        
+        // Mark as processed to prevent multiple callbacks
+        endEventProcessedRef.current = true;
+        
+        // Stop playback when we reach the end time
+        audioRef.current.pause();
+        setIsPlaying(false);
+        
+        // Call the onEnded callback to notify parent
+        if (onEnded) {
+          // Reset sentence end time
+          const prevEndTime = sentenceEndTimeRef.current;
+          sentenceEndTimeRef.current = null;
+          
+          // Small delay to ensure state is updated before callback
+          setTimeout(() => {
+            if (audioRef.current && Math.abs(audioRef.current.currentTime - prevEndTime) < 0.5) {
+              onEnded();
+            }
+          }, 50);
+        }
+      }
     }
   };
   
@@ -161,8 +210,16 @@ const AudioPlayer = forwardRef(({
   const handleAudioEnded = () => {
     setIsPlaying(false);
     
+    // Ensure playback is truly stopped
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    
     if (onEnded) {
-      onEnded();
+      // Small delay to ensure state is updated before callback
+      setTimeout(() => {
+        onEnded();
+      }, 50);
     }
   };
   
