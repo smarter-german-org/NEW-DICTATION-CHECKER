@@ -1343,13 +1343,6 @@ const DictationTool = ({ exerciseId = 1 }) => {
         <div className="input-section">
           {exerciseStarted && (
             <>
-              {/* Progress indicator */}
-              <ProgressIndicator 
-                total={sentences.length}
-                completed={sentenceResults}
-                current={currentSentenceIndex}
-              />
-              
               {/* Real-time character feedback displayed above input */}
               {currentSentence && (
                 <div className="feedback-container real-time">
