@@ -11,10 +11,6 @@ function App() {
       <main className="app-content">
         <DictationTool exerciseId={defaultExerciseId} />
       </main>
-      
-      <footer>
-        <p>© {new Date().getFullYear()} Dictation Checker</p>
-      </footer>
     </div>
   );
 }

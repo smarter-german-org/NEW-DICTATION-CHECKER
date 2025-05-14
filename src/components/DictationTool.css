@@ -470,4 +470,13 @@ kbd {
 .capitalization-toggle:hover {
   background-color: var(--primary-light);
   border-color: var(--primary);
+}
+
+/* Hide elements completely */
+.hidden {
+  display: none !important;
+  visibility: hidden;
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
 } 

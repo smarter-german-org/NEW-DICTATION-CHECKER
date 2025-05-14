@@ -414,7 +414,6 @@ const DictationTool = ({ exerciseId = 1 }) => {
   const audioRef = useRef(null);
   const inputRef = useRef(null);
   const timeoutRef = useRef(null);
-  const nextButtonRef = useRef(null);
   const currentIndexRef = useRef(0); // Keep track of current index for closures
 
   // Update the ref whenever state changes
@@ -639,12 +638,10 @@ const DictationTool = ({ exerciseId = 1 }) => {
     // Always show feedback while typing (don't hide it)
   };
 
-  // Try direct submission with lower-level DOM approach
   const submitInput = () => {
-    if (nextButtonRef.current) {
-      console.log('[DIRECT SUBMIT]', 'Directly clicking the next button');
-      nextButtonRef.current.click();
-    }
+    // Call the handler directly instead of clicking a button
+    console.log('[DIRECT SUBMIT]', 'Directly calling handleNextSentence');
+    handleNextSentence();
   };
 
   const handleKeyDown = (e) => {
@@ -1116,25 +1113,6 @@ const DictationTool = ({ exerciseId = 1 }) => {
                   disabled={isPlaying}
                   autoFocus
                 />
-              </div>
-              
-              <div className="action-buttons">
-                <button 
-                  ref={nextButtonRef}
-                  className="next-button"
-                  onClick={handleNextSentence}
-                  disabled={!userInput.trim() || navigationInProgress}
-                >
-                  Next Sentence
-                </button>
-                
-                <button 
-                  className="play-again-button"
-                  onClick={playCurrentSentence}
-                  disabled={navigationInProgress}
-                >
-                  Play Again
-                </button>
               </div>
             </>
           )}
