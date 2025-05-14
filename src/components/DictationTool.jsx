@@ -91,6 +91,26 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
     return similarity >= threshold;
   };
   
+  // New function to check if a word is part of another word (compound words)
+  const isPartOfCompoundWord = (part, compound) => {
+    if (!part || !compound) return false;
+    
+    // Case insensitive comparison for part detection
+    const lowerPart = part.toLowerCase();
+    const lowerCompound = compound.toLowerCase();
+    
+    // Check if it's a direct substring (anywhere in the compound word)
+    if (lowerCompound.includes(lowerPart)) {
+      // Only consider it a match if the part is at least 3 characters
+      // and makes up a substantial portion of the compound word
+      if (part.length >= 3 && part.length / compound.length >= 0.35) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+  
   // Get normalized versions for processing
   const normalizedExpected = normalizeText(expected, checkCapitalization);
   
@@ -132,6 +152,14 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
               (!checkCapitalization && normalizedCandidateWord === normalizedExpectedWord)) {
             score = 1; // Perfect match
           } 
+          // Check for compound word match (e.g., "morgen" in "Montagmorgen")
+          else if (isPartOfCompoundWord(
+            candidateWord,
+            expectedWord
+          )) {
+            // If it's a substring, give it a good but not perfect score
+            score = 0.85;
+          }
           // Use Levenshtein for similar words
           else if (areSimilarWords(
             checkCapitalization ? expectedWord : normalizedExpectedWord,
@@ -179,7 +207,7 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
         }
         
         // Lower the threshold for words that are likely misspellings
-        const similarityThreshold = 0.5;
+        const similarityThreshold = 0.4; // Lowered from 0.5 to be more lenient
         
         // If we found a good enough match
         if (bestMatch && bestMatch.score > similarityThreshold) {
@@ -241,6 +269,91 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
   // Helper function to compare characters in partially matching words
   const compareChars = (expected, actual, checkCase) => {
     const chars = [];
+    
+    // Check for compound word match first (like "morgen" in "Montagmorgen")
+    if (expected && actual && expected.toLowerCase().includes(actual.toLowerCase())) {
+      // Find the position where the actual word appears in the expected word
+      const actualLower = actual.toLowerCase();
+      const expectedLower = expected.toLowerCase();
+      const startPos = expectedLower.indexOf(actualLower);
+      
+      // Add placeholders for prefix characters
+      for (let i = 0; i < startPos; i++) {
+        chars.push({
+          type: 'char-placeholder',
+          text: '_'
+        });
+      }
+      
+      // Add the matched part (with case-sensitivity check if needed)
+      for (let i = 0; i < actual.length; i++) {
+        const expectedChar = expected[startPos + i];
+        const actualChar = actual[i];
+        
+        // When checking capitalization, characters must match exactly
+        // Otherwise, case is ignored
+        const isMatch = checkCase 
+          ? expectedChar === actualChar
+          : expectedChar.toLowerCase() === actualChar.toLowerCase();
+        
+        chars.push({
+          type: isMatch ? 'char-correct' : 'char-incorrect',
+          text: actualChar
+        });
+      }
+      
+      // Add placeholders for suffix characters
+      for (let i = startPos + actual.length; i < expected.length; i++) {
+        chars.push({
+          type: 'char-placeholder',
+          text: '_'
+        });
+      }
+      
+      return chars;
+    }
+    
+    // If actual is in expected (like "morgen" in "Montagmorgen") in reverse
+    if (expected && actual && actual.toLowerCase().includes(expected.toLowerCase())) {
+      // Find the position where the expected word appears in the actual word
+      const actualLower = actual.toLowerCase();
+      const expectedLower = expected.toLowerCase();
+      const startPos = actualLower.indexOf(expectedLower);
+      
+      // First add any extra characters at the beginning
+      for (let i = 0; i < startPos; i++) {
+        chars.push({
+          type: 'char-extra',
+          text: actual[i]
+        });
+      }
+      
+      // Add the matched part
+      for (let i = 0; i < expected.length; i++) {
+        const expectedChar = expected[i];
+        const actualChar = actual[startPos + i];
+        
+        // Check if characters match (with case sensitivity if needed)
+        const isMatch = checkCase 
+          ? expectedChar === actualChar
+          : expectedChar.toLowerCase() === actualChar.toLowerCase();
+        
+        chars.push({
+          type: isMatch ? 'char-correct' : 'char-incorrect',
+          text: actualChar
+        });
+      }
+      
+      // Add any extra characters at the end
+      for (let i = startPos + expected.length; i < actual.length; i++) {
+        chars.push({
+          type: 'char-extra',
+          text: actual[i]
+        });
+      }
+      
+      return chars;
+    }
     
     // To avoid issues with capitalization mode, first normalize both strings
     // but preserve case if needed for capitalization checking
