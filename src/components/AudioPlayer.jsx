@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import './AudioPlayer.css';
 
-const AudioPlayer = forwardRef(({ audioSrc, onEnded, onPlayStateChange }, ref) => {
+const AudioPlayer = forwardRef(({ 
+  audioSrc, 
+  onEnded, 
+  onPlayStateChange,
+  checkCapitalization = false,
+  onToggleCapitalization = () => {}
+}, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [infiniteLoop, setInfiniteLoop] = useState(false);
-  const [checkCapitalization, setCheckCapitalization] = useState(false);
   
   const audioRef = useRef(null);
   const progressRef = useRef(null);
@@ -121,10 +126,6 @@ const AudioPlayer = forwardRef(({ audioSrc, onEnded, onPlayStateChange }, ref) =
   const toggleInfiniteLoop = () => {
     setInfiniteLoop(!infiniteLoop);
   };
-
-  const toggleCapitalization = () => {
-    setCheckCapitalization(!checkCapitalization);
-  };
   
   return (
     <div className="audio-player">
@@ -212,8 +213,8 @@ const AudioPlayer = forwardRef(({ audioSrc, onEnded, onPlayStateChange }, ref) =
           <div className="controls-right">
             <button 
               className={`option-toggle ${checkCapitalization ? 'active' : ''}`}
-              onClick={toggleCapitalization}
-              title="Toggle case sensitivity"
+              onClick={onToggleCapitalization}
+              title={`Case Sensitivity: ${checkCapitalization ? 'Strict (Hard Mode)' : 'Relaxed (Normal Mode)'}`}
             >
               Aa
             </button>
@@ -221,7 +222,7 @@ const AudioPlayer = forwardRef(({ audioSrc, onEnded, onPlayStateChange }, ref) =
             <button 
               className={`option-toggle ${infiniteLoop ? 'active' : ''}`}
               onClick={toggleInfiniteLoop}
-              title="Toggle infinite loop"
+              title={infiniteLoop ? "Infinite loop enabled" : "Infinite loop disabled"}
             >
               ∞
             </button>

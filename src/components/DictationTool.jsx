@@ -989,6 +989,8 @@ const DictationTool = ({ exerciseId = 1 }) => {
           audioSrc={selectedExercise.audio} 
           ref={audioRef}
           onPlayStateChange={handleAudioPlayStateChange}
+          checkCapitalization={checkCapitalization}
+          onToggleCapitalization={() => setCheckCapitalization(prev => !prev)}
         />
       </div>
       
@@ -1041,16 +1043,6 @@ const DictationTool = ({ exerciseId = 1 }) => {
                 disabled={isPlaying}
                 autoFocus
               />
-              
-              <div className="options-container">
-                <button 
-                  className={`capitalization-toggle ${checkCapitalization ? 'active' : ''}`}
-                  onClick={() => setCheckCapitalization(prev => !prev)}
-                  title={`Case Sensitivity: ${checkCapitalization ? 'Strict (Hard Mode)' : 'Relaxed (Normal Mode)'}`}
-                >
-                  Aa
-                </button>
-              </div>
               
               <div className="action-buttons">
                 <button 
