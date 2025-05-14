@@ -188,13 +188,18 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
           
           // First check for exact match with proper capitalization handling
           if (checkCapitalization) {
-            // When checking capitalization, require exact match
-            if (candidateWord === expectedWord) {
+            // Normalize both words for umlauts before checking capitalization
+            const normalizedCandidate = normalizeText(candidateWord, true);
+            const normalizedExpected = normalizeText(expectedWord, true);
+            
+            // When checking capitalization, require exact match but with umlaut normalization
+            if (normalizedCandidate === normalizedExpected) {
               score = 1;
             }
           } else {
             // When not checking capitalization, compare lowercase versions
-            if (candidateWord.toLowerCase() === expectedWord.toLowerCase()) {
+            // Both should already be normalized at this point
+            if (normalizedCandidateWord === normalizedExpectedWord) {
               score = 1;
             }
           }
@@ -1050,8 +1055,28 @@ const DictationTool = ({ exerciseId = 1 }) => {
   };
 
   const handleInputChange = (e) => {
-    setUserInput(e.target.value);
-    // Always show feedback while typing (don't hide it)
+    // Get the raw input value
+    let inputValue = e.target.value;
+    
+    // Apply real-time umlaut transformations
+    inputValue = inputValue
+      // Handle o-umlaut variations
+      .replace(/oe/g, 'ö')
+      .replace(/o\//g, 'ö')
+      .replace(/o:/g, 'ö')
+      // Handle a-umlaut variations
+      .replace(/ae/g, 'ä')
+      .replace(/a\//g, 'ä')
+      .replace(/a:/g, 'ä')
+      // Handle u-umlaut variations
+      .replace(/ue/g, 'ü')
+      .replace(/u\//g, 'ü')
+      .replace(/u:/g, 'ü')
+      // Handle eszett/sharp s
+      .replace(/s\//g, 'ß');
+    
+    // Set the transformed input
+    setUserInput(inputValue);
   };
 
   const submitInput = () => {

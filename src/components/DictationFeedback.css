@@ -190,6 +190,7 @@
   margin-bottom: 5px;
   min-width: max-content;
   max-width: 250px;
+  word-break: break-word;
 }
 
 .word-tooltip::after {
@@ -206,10 +207,23 @@
 .word-tooltip-left {
   left: 0;
   transform: translateX(0) translateY(-10px);
+  right: auto;
 }
 
 .word-tooltip-left::after {
   left: 15px;
+  margin-left: 0;
+}
+
+.word-tooltip-right {
+  left: auto;
+  right: 0;
+  transform: translateX(0) translateY(-10px);
+}
+
+.word-tooltip-right::after {
+  left: auto;
+  right: 15px;
   margin-left: 0;
 }
 

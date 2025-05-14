@@ -165,23 +165,38 @@ const DictationFeedback = ({
         if (result.isCorrect) {
           correctWords += actualWordCount;
         } else {
-          // Simple word-by-word comparison to count incorrect words
-          const expectedWords = result.expected.split(/\s+/).filter(Boolean).map(w => w.toLowerCase());
-          const actualWords = result.actual.split(/\s+/).filter(Boolean).map(w => w.toLowerCase());
+          // Normalize both expected and actual words with umlaut handling
+          const expectedWords = result.expected.split(/\s+/).filter(Boolean)
+            .map(w => normalizeGermanText(w.toLowerCase()));
+          const actualWords = result.actual.split(/\s+/).filter(Boolean)
+            .map(w => normalizeGermanText(w.toLowerCase()));
           
+          // Count correct words (those that match after normalization)
           let tempCorrectWords = 0;
-          actualWords.forEach(word => {
-            if (expectedWords.includes(word)) {
+          const matchedExpectedIndices = new Set();
+          
+          actualWords.forEach(normalizedActual => {
+            // Find first unmatched expected word that matches this actual word
+            const matchIndex = expectedWords.findIndex((normalizedExpected, idx) => 
+              !matchedExpectedIndices.has(idx) && normalizedActual === normalizedExpected
+            );
+            
+            if (matchIndex !== -1) {
+              matchedExpectedIndices.add(matchIndex);
               tempCorrectWords++;
             }
           });
           
           correctWords += tempCorrectWords;
+          
+          // Incorrect words are those entered incorrectly (not missing words)
           incorrectWords += (actualWordCount - tempCorrectWords);
           
-          // Count missing words (expected words that weren't typed)
-          const missingWordsCount = Math.max(0, expectedWordCount - actualWordCount);
-          incorrectWords += missingWordsCount; // Count missing words as incorrect
+          // Missing words are calculated separately (no need to add to incorrectWords)
+          const missingWordsCount = Math.max(0, expectedWordCount - matchedExpectedIndices.size);
+          
+          // We count missing words in the display but not in the incorrectWords total
+          // This prevents double-counting in the mistakes calculation
         }
       }
     });
@@ -256,9 +271,20 @@ const DictationFeedback = ({
         // Check if word is close to left edge (less than 60px from left)
         const isNearLeftEdge = rect.left - containerRect.left < 60;
         
+        // Check if word is close to right edge (less than 60px from right)
+        const isNearRightEdge = containerRect.right - rect.right < 60;
+        
+        // Set position based on proximity to edges
+        let position = 'center';
+        if (isNearLeftEdge) {
+          position = 'left';
+        } else if (isNearRightEdge) {
+          position = 'right';
+        }
+        
         setTooltipPositions({
           ...tooltipPositions,
-          [activeTooltip]: isNearLeftEdge ? 'left' : 'center'
+          [activeTooltip]: position
         });
       }
     }, [activeTooltip]);
@@ -281,7 +307,7 @@ const DictationFeedback = ({
     const renderTooltip = (tooltipId, content) => {
       const position = tooltipPositions[tooltipId] || 'center';
       return (
-        <span className={`word-tooltip ${position === 'left' ? 'word-tooltip-left' : ''}`}>
+        <span className={`word-tooltip ${position === 'left' ? 'word-tooltip-left' : position === 'right' ? 'word-tooltip-right' : ''}`}>
           {content}
         </span>
       );
