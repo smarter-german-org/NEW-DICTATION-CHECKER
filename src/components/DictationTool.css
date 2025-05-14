@@ -57,42 +57,61 @@
   margin-bottom: 10px;
 }
 
+/* Cursor styling and area indication */
+.dictation-input-area {
+  position: relative;
+  margin-top: 10px;
+  margin-bottom: 15px;
+  padding: 10px 15px;
+  border-left: 3px solid var(--primary);
+  background-color: rgba(156, 39, 176, 0.03);
+  border-radius: 0 4px 4px 0;
+}
+
+/* Ensure cursor blinks visibly */
+@keyframes blink-caret {
+  from, to { caret-color: transparent; }
+  50% { caret-color: var(--primary); }
+}
+
 .dictation-input {
   width: 100%;
-  padding: 15px;
-  font-size: 16px;
-  border: 2px solid var(--gray);
-  border-radius: 8px;
-  min-height: 120px;
-  resize: vertical;
+  padding: 10px 0;
+  font-size: 18px;
+  border: none;
+  background-color: transparent;
+  min-height: 60px;
+  resize: none;
   transition: all 0.2s ease;
   display: block;
-  margin-top: 15px;
-  margin-bottom: 15px;
+  caret-color: var(--primary);
+  animation: blink-caret 1s step-end infinite;
+  color: var(--text);
 }
 
 .dictation-input:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(139, 65, 160, 0.2);
+  box-shadow: none;
 }
 
 .dictation-input:disabled {
-  background-color: var(--gray-light);
+  background-color: transparent;
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* Enhanced visibility states for the input field */
 .dictation-input.is-waiting {
-  border: 2px solid var(--primary);
-  box-shadow: 0 0 8px rgba(156, 39, 176, 0.5);
-  background-color: white;
+  border: none;
+  box-shadow: none;
+  background-color: transparent;
+  caret-color: var(--primary);
 }
 
 .dictation-input.is-playing {
-  border: 2px solid var(--gray);
-  background-color: var(--gray-light);
-  opacity: 0.8;
+  border: none;
+  background-color: transparent;
+  opacity: 0.5;
 }
 
 /* Character feedback styles */
@@ -117,7 +136,7 @@
   margin-bottom: 0;
   font-size: 18px;
   min-height: 40px;
-  border-bottom: 1px solid var(--gray-light);
+  border-bottom: none;
 }
 
 @keyframes fadeIn {

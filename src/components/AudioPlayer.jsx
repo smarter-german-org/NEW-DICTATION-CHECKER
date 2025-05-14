@@ -20,14 +20,20 @@ const AudioPlayer = forwardRef(({
   // Expose audio methods to parent component
   useImperativeHandle(ref, () => ({
     play: () => {
-      audioRef.current.play();
+      if (audioRef.current && isLoaded) {
+        audioRef.current.play();
+      }
     },
     pause: () => {
-      audioRef.current.pause();
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
     },
     stop: () => {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
     },
     seekTo: (timeInSeconds) => {
       if (audioRef.current && isLoaded) {
@@ -38,10 +44,10 @@ const AudioPlayer = forwardRef(({
       return false;
     },
     getCurrentTime: () => {
-      return audioRef.current.currentTime;
+      return audioRef.current ? audioRef.current.currentTime : 0;
     },
     getDuration: () => {
-      return audioRef.current.duration;
+      return audioRef.current ? audioRef.current.duration : 0;
     }
   }));
   
@@ -104,27 +110,47 @@ const AudioPlayer = forwardRef(({
   };
   
   const handleTimeUpdate = () => {
-    setCurrentTime(audioRef.current.currentTime);
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
   };
   
   const handleLoadedMetadata = () => {
-    setDuration(audioRef.current.duration);
-    setIsLoaded(true);
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+      setIsLoaded(true);
+    }
   };
   
   const handleAudioEnded = () => {
     setIsPlaying(false);
-    if (onEnded) onEnded();
+    
+    // Only handle infinite loop internally if onEnded isn't provided
+    // This allows the parent component to control looping behavior
+    if (infiniteLoop && !onEnded) {
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play()
+          .then(() => {
+            setIsPlaying(true);
+            if (onPlayStateChange) onPlayStateChange(true);
+          })
+          .catch(error => console.error('Playback failed after loop:', error));
+      }
+    } else if (onEnded) {
+      onEnded();
+    }
   };
   
   const handlePlayingState = () => {
-    const playing = !audioRef.current.paused;
+    const playing = audioRef.current && !audioRef.current.paused;
     setIsPlaying(playing);
     if (onPlayStateChange) onPlayStateChange(playing);
   };
 
   const toggleInfiniteLoop = () => {
-    setInfiniteLoop(!infiniteLoop);
+    // Only toggle infinite loop state, don't affect playback
+    setInfiniteLoop(prev => !prev);
   };
   
   return (
@@ -137,6 +163,7 @@ const AudioPlayer = forwardRef(({
         onEnded={handleAudioEnded}
         onPlay={handlePlayingState}
         onPause={handlePlayingState}
+        loop={false} /* Important: disable HTML5 loop attribute */
       />
       
       <div className="player-container">

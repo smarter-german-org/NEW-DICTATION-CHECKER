@@ -30,6 +30,11 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
     return text.replace(/[^\p{L}\p{N}\s]/gu, '');
   };
   
+  // Custom function to identify punctuation characters
+  const isPunctuation = (char) => {
+    return /[^\p{L}\p{N}\s]/gu.test(char);
+  };
+  
   // Get normalized versions for processing
   const normalizedExpected = normalizeText(expected, checkCapitalization);
   
@@ -160,16 +165,49 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
     const normalizedExpected = normalizeText(expected, checkCase);
     const normalizedActual = normalizeText(actual, checkCase);
     
-    const expectedChars = normalizedExpected.split('');
-    const actualChars = normalizedActual.split('');
+    // Work with the original strings but use normalized for comparison
+    const expectedChars = expected.split('');
+    const actualChars = actual.split('');
+    
+    // Use normalized versions for comparison but display the original text
+    const expectedCharsForCompare = normalizedExpected.split('');
+    const actualCharsForCompare = normalizedActual.split('');
     
     for (let j = 0; j < expectedChars.length; j++) {
+      // Handle punctuation in the expected text
+      if (isPunctuation(expectedChars[j])) {
+        // If we have an exact match for punctuation, mark it correct
+        if (j < actualChars.length && expectedChars[j] === actualChars[j]) {
+          chars.push({
+            type: 'char-correct',
+            text: expectedChars[j]
+          });
+        } else {
+          // Missing punctuation
+          chars.push({
+            type: 'char-placeholder',
+            text: expectedChars[j] // Use the actual punctuation mark instead of underscore
+          });
+        }
+        continue;
+      }
+      
       if (j < actualChars.length) {
         // User typed this character - check if correct
+        if (isPunctuation(actualChars[j])) {
+          // If the user typed punctuation where none was expected
+          chars.push({
+            type: 'char-incorrect',
+            text: actualChars[j]
+          });
+          continue;
+        }
+        
         // When checkCase is true, require EXACT case match of every character
         const isCharCorrect = checkCase
-          ? actualChars[j] === expectedChars[j]
-          : actualChars[j].toLowerCase() === expectedChars[j].toLowerCase();
+          ? actualChars[j] === expectedChars[j]  // Exact match including case
+          : (actualCharsForCompare[j] && expectedCharsForCompare[j] && 
+             actualCharsForCompare[j].toLowerCase() === expectedCharsForCompare[j].toLowerCase());  // Case-insensitive match
           
         if (isCharCorrect) {
           // Correct character
@@ -648,23 +686,42 @@ const DictationTool = ({ exerciseId = 1 }) => {
     const currentSentence = sentences[indexToPlay];
     
     if (audioRef.current) {
+      console.log("Playing sentence at index:", indexToPlay, "starting at time:", currentSentence.startTime);
+      
+      // Make sure audio is in stopped state first
+      audioRef.current.pause();
+      
       // Set the current time to the start of the sentence
       audioRef.current.seekTo(currentSentence.startTime);
+      
       // Play the audio
       audioRef.current.play();
       setIsPlaying(true);
+      
       // Set a timeout to pause at the end of the sentence
       const duration = (currentSentence.endTime - currentSentence.startTime) * 1000;
+      console.log("Sentence duration (ms):", duration);
+      
+      // Clear any existing timeout first (redundant check but important)
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
       timeoutRef.current = setTimeout(() => {
-        audioRef.current.pause();
-        setIsPlaying(false);
-        // Focus the input field
-        setTimeout(() => {
-          if (inputRef.current) {
-            inputRef.current.focus();
-            setWaitingForInput(true);
-          }
-        }, 100);
+        console.log("Sentence playback finished, pausing audio");
+        if (audioRef.current) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+          
+          // Focus the input field
+          setTimeout(() => {
+            if (inputRef.current) {
+              inputRef.current.focus();
+              setWaitingForInput(true);
+              console.log('[FOCUS]', 'Input field focused after audio stopped');
+            }
+          }, 100);
+        }
         timeoutRef.current = null;
       }, duration);
     }
@@ -719,7 +776,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
     // Clean up expected text (remove punctuation, normalize spaces)
     const normalizeForComparison = (text, preserveCase = false) => {
       let normalized = text
-        .replace(/[^\w\s]/g, '')
+        .replace(/[^\p{L}\p{N}\s]/gu, '')
         .replace(/\s+/g, ' ')
         .trim();
       
@@ -970,6 +1027,21 @@ const DictationTool = ({ exerciseId = 1 }) => {
     setShowShortcuts(prev => !prev);
   };
 
+  // Extra cleanup to ensure audio stops on unmount 
+  useEffect(() => {
+    return () => {
+      // Stop any playback and clear timeouts on unmount or prop change
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [selectedExercise]);
+
   if (isLoading) {
     return <div className="loading">Loading exercise...</div>;
   }
@@ -1033,16 +1105,18 @@ const DictationTool = ({ exerciseId = 1 }) => {
                 </div>
               )}
               
-              <textarea
-                ref={inputRef}
-                className={`dictation-input ${isPlaying ? 'is-playing' : 'is-waiting'}`}
-                value={userInput}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                placeholder="Type what you hear, then press Enter..."
-                disabled={isPlaying}
-                autoFocus
-              />
+              <div className="dictation-input-area">
+                <textarea
+                  ref={inputRef}
+                  className={`dictation-input ${isPlaying ? 'is-playing' : 'is-waiting'}`}
+                  value={userInput}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type what you hear, then press Enter..."
+                  disabled={isPlaying}
+                  autoFocus
+                />
+              </div>
               
               <div className="action-buttons">
                 <button 
