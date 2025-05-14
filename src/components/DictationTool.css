@@ -187,9 +187,14 @@
 
 .word-extra {
   color: #dc3545; /* Red */
-  font-weight: 500;
+  background-color: rgba(220, 53, 69, 0.1); /* Light red background */
+  font-weight: 600;
   text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  padding: 0 2px;
+  border-radius: 3px;
   margin-right: 4px;
+  display: inline-block;
 }
 
 /* Explicitly set the spacing for word spaces */

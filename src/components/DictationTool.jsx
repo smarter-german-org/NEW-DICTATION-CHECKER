@@ -95,15 +95,26 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
   const isPartOfCompoundWord = (part, compound) => {
     if (!part || !compound) return false;
     
+    // First, check if this is an exact match - always prioritize exact matches
+    if (part.toLowerCase() === compound.toLowerCase()) {
+      return true;
+    }
+    
     // Case insensitive comparison for part detection
     const lowerPart = part.toLowerCase();
     const lowerCompound = compound.toLowerCase();
     
+    // Special case for key words that should be matched exactly
+    const exactMatchWords = ['fährt', 'fahrt', 'büro', 'buro', 'in', 'ihr', 'ist', 'der', 'die', 'das'];
+    if (exactMatchWords.includes(lowerPart) || exactMatchWords.includes(lowerCompound)) {
+      return lowerPart === lowerCompound;
+    }
+    
     // Check if it's a direct substring (anywhere in the compound word)
     if (lowerCompound.includes(lowerPart)) {
-      // Only consider it a match if the part is at least 3 characters
+      // Only consider it a match if the part is at least 2 characters (reduced from 3)
       // and makes up a substantial portion of the compound word
-      if (part.length >= 3 && part.length / compound.length >= 0.35) {
+      if (part.length >= 2 && part.length / compound.length >= 0.35) {
         return true;
       }
     }
@@ -137,7 +148,8 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
       } else {
         let bestMatch = null;
         let bestScore = -1;
-        let searchAhead = Math.min(3, actualWords.length - actualWordIndex); // Look ahead up to 3 words
+        // Increase search ahead to better handle skipped words - look at more candidates
+        let searchAhead = Math.min(5, actualWords.length - actualWordIndex); // Look ahead up to 5 words (increased from 3)
         
         // Look ahead a few words to find the best match
         for (let j = 0; j < searchAhead; j++) {
@@ -147,21 +159,30 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
           // Calculate match score (0-1)
           let score = 0;
           
-          // Perfect match case - exact text match considering case sensitivity
-          if ((checkCapitalization && candidateWord === expectedWord) || 
-              (!checkCapitalization && normalizedCandidateWord === normalizedExpectedWord)) {
-            score = 1; // Perfect match
-          } 
+          // First check for exact match with proper capitalization handling
+          if (checkCapitalization) {
+            // When checking capitalization, require exact match
+            if (candidateWord === expectedWord) {
+              score = 1;
+            }
+          } else {
+            // When not checking capitalization, compare lowercase versions
+            if (candidateWord.toLowerCase() === expectedWord.toLowerCase()) {
+              score = 1;
+            }
+          }
+          
           // Check for compound word match (e.g., "morgen" in "Montagmorgen")
-          else if (isPartOfCompoundWord(
+          if (score < 0.9 && isPartOfCompoundWord(
             candidateWord,
             expectedWord
           )) {
             // If it's a substring, give it a good but not perfect score
             score = 0.85;
           }
+          
           // Use Levenshtein for similar words
-          else if (areSimilarWords(
+          if (score < 0.8 && areSimilarWords(
             checkCapitalization ? expectedWord : normalizedExpectedWord,
             checkCapitalization ? candidateWord : normalizedCandidateWord
           )) {
@@ -176,7 +197,7 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
             );
             score = 0.5 + 0.4 * (1 - dist / maxLen); // Score between 0.5 and 0.9 for similar words
           } 
-          else {
+          else if (score < 0.5) {
             // Less similar words - use character matching as fallback
             const expectedForCompare = checkCapitalization ? expectedWord : normalizedExpectedWord;
             const candidateForCompare = checkCapitalization ? candidateWord : normalizedCandidateWord;
@@ -192,6 +213,29 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
             score = matchingChars / Math.max(expectedForCompare.length, candidateForCompare.length);
           }
           
+          // Special case for common small words like "in", "ihr", etc.
+          if (score < 0.8 && 
+             (expectedWord.toLowerCase() === 'in' || 
+              expectedWord.toLowerCase() === 'ihr' || 
+              expectedWord.toLowerCase() === 'ist' || 
+              expectedWord.toLowerCase() === 'es' ||
+              expectedWord.toLowerCase() === 'der' ||
+              expectedWord.toLowerCase() === 'die' ||
+              expectedWord.toLowerCase() === 'das')) {
+            // For these common short words, be more lenient with the exact match 
+            if (candidateWord.toLowerCase() === expectedWord.toLowerCase()) {
+              score = 0.95; // Nearly perfect match for common small words
+            }
+          }
+          
+          // Apply a position penalty for words that are far away from their expected position
+          // This helps maintain proper word order when words are skipped
+          if (score > 0.4) {
+            // Small penalty for distance from expected position
+            const positionPenalty = j * 0.03; // 3% penalty per position away
+            score = Math.max(0.4, score - positionPenalty);
+          }
+          
           // Track best match found
           if (score > bestScore) {
             bestScore = score;
@@ -203,11 +247,11 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
           }
           
           // If we found a perfect match, stop looking
-          if (score === 1) break;
+          if (score > 0.95) break;
         }
         
         // Lower the threshold for words that are likely misspellings
-        const similarityThreshold = 0.4; // Lowered from 0.5 to be more lenient
+        const similarityThreshold = 0.38; // Lowered from 0.4 to be more lenient
         
         // If we found a good enough match
         if (bestMatch && bestMatch.score > similarityThreshold) {
@@ -231,7 +275,7 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
           }
           
           // Add the matching word
-          if (bestMatch.score === 1) {
+          if (bestMatch.score >= 0.9) {
             result.push({
               type: 'correct',
               text: expectedWord
@@ -246,11 +290,14 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
           
           actualWordIndex = bestMatch.index + 1; // Move past this word
         } else {
-          // No good match found, treat as missing
+          // No good match found for the expected word - mark as missing
           result.push({
             type: 'missing',
             text: expectedWord
           });
+          
+          // Don't increment actualWordIndex here, so we can try to match
+          // the same actual word with the next expected word
         }
       }
       
@@ -263,12 +310,50 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
       }
     }
     
+    // Add any remaining actual words that weren't matched
+    // This ensures words like "bureau" are shown even when they don't match any expected word
+    while (actualWordIndex < actualWords.length) {
+      // Add a space before adding the extra word (if not at the beginning)
+      if (result.length > 0 && result[result.length - 1].type !== 'space') {
+        result.push({
+          type: 'space',
+          text: ' '
+        });
+      }
+      
+      // Add the unmatched actual word
+      result.push({
+        type: 'extra',
+        text: actualWords[actualWordIndex]
+      });
+      actualWordIndex++;
+    }
+    
     return result;
   };
   
   // Helper function to compare characters in partially matching words
   const compareChars = (expected, actual, checkCase) => {
     const chars = [];
+    
+    // Special case for when capitalization is enabled but the words match case-insensitively
+    // (e.g., "büro" vs "Büro") - we want to mark just the incorrectly cased characters
+    if (checkCase && expected && actual && expected.toLowerCase() === actual.toLowerCase()) {
+      // Characters match but possibly with different case
+      for (let i = 0; i < actual.length; i++) {
+        const expectedChar = expected[i];
+        const actualChar = actual[i];
+        
+        // Only the case difference should be marked incorrect
+        const isMatch = expectedChar === actualChar;
+        
+        chars.push({
+          type: isMatch ? 'char-correct' : 'char-incorrect',
+          text: actualChar
+        });
+      }
+      return chars;
+    }
     
     // Check for compound word match first (like "morgen" in "Montagmorgen")
     if (expected && actual && expected.toLowerCase().includes(actual.toLowerCase())) {
