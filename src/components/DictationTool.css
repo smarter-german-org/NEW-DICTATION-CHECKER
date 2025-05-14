@@ -163,10 +163,16 @@
 .word-correct {
   color: #28a745; /* Green */
   font-weight: 500;
+  margin-right: 4px;
 }
 
 .word-partial {
-  display: inline;
+  display: inline-block;
+  border-radius: 3px;
+  padding: 0 1px;
+  background-color: rgba(255, 235, 205, 0.3);
+  position: relative;
+  margin-right: 4px;
 }
 
 .word-missing {
@@ -176,17 +182,21 @@
   font-weight: 500;
   white-space: nowrap; /* Keep underscores together */
   display: inline-block;
+  margin-right: 4px;
 }
 
 .word-extra {
   color: #dc3545; /* Red */
   font-weight: 500;
   text-decoration: line-through;
+  margin-right: 4px;
 }
 
+/* Explicitly set the spacing for word spaces */
 .word-space {
-  display: inline;
+  display: inline-block;
   white-space: pre;
+  margin: 0 2px;
 }
 
 /* Character-level styles */
@@ -198,6 +208,9 @@
 .char-incorrect {
   color: #dc3545; /* Red */
   font-weight: 500;
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: #dc3545;
 }
 
 .char-placeholder {

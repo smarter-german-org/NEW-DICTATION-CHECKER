@@ -35,6 +35,62 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
     return /[^\p{L}\p{N}\s]/gu.test(char);
   };
   
+  // Calculate Levenshtein distance between two strings
+  const levenshteinDistance = (str1, str2) => {
+    const m = str1.length;
+    const n = str2.length;
+    
+    // Create a matrix of size (m+1) x (n+1)
+    const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));
+    
+    // Initialize the first row and column
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    
+    // Fill the matrix
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(
+          dp[i - 1][j] + 1,     // deletion
+          dp[i][j - 1] + 1,     // insertion
+          dp[i - 1][j - 1] + cost  // substitution
+        );
+      }
+    }
+    
+    return dp[m][n];
+  };
+  
+  // Function to check if two words are similar enough based on Levenshtein distance
+  const areSimilarWords = (word1, word2) => {
+    if (!word1 || !word2) return false;
+    
+    // Exact match
+    if (word1 === word2) return true;
+    
+    const distance = levenshteinDistance(word1, word2);
+    const longerLength = Math.max(word1.length, word2.length);
+    
+    // Calculate similarity as a percentage
+    const similarity = 1 - distance / longerLength;
+    
+    // Determine threshold based on word length
+    // Shorter words need higher similarity to be considered a match
+    let threshold;
+    if (longerLength <= 3) {
+      threshold = 0.7; // Very short words
+    } else if (longerLength <= 5) {
+      threshold = 0.65; // Short words
+    } else if (longerLength <= 8) {
+      threshold = 0.6; // Medium words
+    } else {
+      threshold = 0.55; // Long words
+    }
+    
+    return similarity >= threshold;
+  };
+  
   // Get normalized versions for processing
   const normalizedExpected = normalizeText(expected, checkCapitalization);
   
@@ -71,12 +127,29 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
           // Calculate match score (0-1)
           let score = 0;
           
-          // When capitalization checking is enabled, compare with exact case match
+          // Perfect match case - exact text match considering case sensitivity
           if ((checkCapitalization && candidateWord === expectedWord) || 
               (!checkCapitalization && normalizedCandidateWord === normalizedExpectedWord)) {
             score = 1; // Perfect match
-          } else {
-            // Partial match calculation - character by character
+          } 
+          // Use Levenshtein for similar words
+          else if (areSimilarWords(
+            checkCapitalization ? expectedWord : normalizedExpectedWord,
+            checkCapitalization ? candidateWord : normalizedCandidateWord
+          )) {
+            // Calculate a score based on normalized Levenshtein distance
+            const dist = levenshteinDistance(
+              checkCapitalization ? expectedWord : normalizedExpectedWord,
+              checkCapitalization ? candidateWord : normalizedCandidateWord
+            );
+            const maxLen = Math.max(
+              (checkCapitalization ? expectedWord : normalizedExpectedWord).length,
+              (checkCapitalization ? candidateWord : normalizedCandidateWord).length
+            );
+            score = 0.5 + 0.4 * (1 - dist / maxLen); // Score between 0.5 and 0.9 for similar words
+          } 
+          else {
+            // Less similar words - use character matching as fallback
             const expectedForCompare = checkCapitalization ? expectedWord : normalizedExpectedWord;
             const candidateForCompare = checkCapitalization ? candidateWord : normalizedCandidateWord;
             const minLength = Math.min(expectedForCompare.length, candidateForCompare.length);
@@ -105,8 +178,11 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
           if (score === 1) break;
         }
         
+        // Lower the threshold for words that are likely misspellings
+        const similarityThreshold = 0.5;
+        
         // If we found a good enough match
-        if (bestMatch && bestMatch.score > 0.5) {
+        if (bestMatch && bestMatch.score > similarityThreshold) {
           // Add any skipped words as extras - but ONLY in expected words positions
           for (let j = actualWordIndex; j < bestMatch.index; j++) {
             // Only add if we're still within expected words range
@@ -115,6 +191,14 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
                 type: 'extra',
                 text: actualWords[j]
               });
+              
+              // Add a space after each extra word (except the last one before the match)
+              if (j < bestMatch.index - 1) {
+                result.push({
+                  type: 'space',
+                  text: ' '
+                });
+              }
             }
           }
           
@@ -151,8 +235,6 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
       }
     }
     
-    // We no longer add remaining actual words as extras at the end
-    
     return result;
   };
   
@@ -165,81 +247,139 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
     const normalizedExpected = normalizeText(expected, checkCase);
     const normalizedActual = normalizeText(actual, checkCase);
     
+    // For improved character matching in misspelled words, use a variation
+    // of the Levenshtein algorithm to highlight in-place differences
+    
     // Work with the original strings but use normalized for comparison
     const expectedChars = expected.split('');
     const actualChars = actual.split('');
     
-    // Use normalized versions for comparison but display the original text
-    const expectedCharsForCompare = normalizedExpected.split('');
-    const actualCharsForCompare = normalizedActual.split('');
+    // If one of the strings is much longer than the other, try to align them better
+    // This helps with cases where letters were added/omitted in the middle
+    let offsetExpected = 0;
+    let offsetActual = 0;
     
-    for (let j = 0; j < expectedChars.length; j++) {
+    // Compare character by character with dynamic adjustment
+    while (offsetExpected < expectedChars.length) {
+      const charExpected = expectedChars[offsetExpected];
+      
       // Handle punctuation in the expected text
-      if (isPunctuation(expectedChars[j])) {
+      if (isPunctuation(charExpected)) {
         // If we have an exact match for punctuation, mark it correct
-        if (j < actualChars.length && expectedChars[j] === actualChars[j]) {
+        if (offsetActual < actualChars.length && charExpected === actualChars[offsetActual]) {
           chars.push({
             type: 'char-correct',
-            text: expectedChars[j]
+            text: charExpected
           });
+          offsetActual++; // Move both pointers
         } else {
           // Missing punctuation
           chars.push({
             type: 'char-placeholder',
-            text: expectedChars[j] // Use the actual punctuation mark instead of underscore
+            text: charExpected // Use the actual punctuation mark instead of underscore
           });
         }
+        offsetExpected++;
         continue;
       }
       
-      if (j < actualChars.length) {
-        // User typed this character - check if correct
-        if (isPunctuation(actualChars[j])) {
-          // If the user typed punctuation where none was expected
-          chars.push({
-            type: 'char-incorrect',
-            text: actualChars[j]
-          });
-          continue;
-        }
-        
-        // When checkCase is true, require EXACT case match of every character
-        const isCharCorrect = checkCase
-          ? actualChars[j] === expectedChars[j]  // Exact match including case
-          : (actualCharsForCompare[j] && expectedCharsForCompare[j] && 
-             actualCharsForCompare[j].toLowerCase() === expectedCharsForCompare[j].toLowerCase());  // Case-insensitive match
-          
-        if (isCharCorrect) {
-          // Correct character
-          chars.push({
-            type: 'char-correct',
-            text: actualChars[j]
-          });
-        } else {
-          // Incorrect character
-          chars.push({
-            type: 'char-incorrect',
-            text: actualChars[j]
-          });
-        }
-      } else {
+      // If we've reached the end of the actual text
+      if (offsetActual >= actualChars.length) {
         // User hasn't typed this character yet - use underscore placeholder
         chars.push({
           type: 'char-placeholder',
           text: '_'
         });
+        offsetExpected++;
+        continue;
+      }
+      
+      const charActual = actualChars[offsetActual];
+      
+      // If actual char is punctuation but expected is not
+      if (isPunctuation(charActual)) {
+        chars.push({
+          type: 'char-incorrect',
+          text: charActual
+        });
+        offsetActual++;
+        continue;
+      }
+      
+      // When checkCase is true, require EXACT case match of every character
+      const isCharCorrect = checkCase
+        ? charExpected === charActual  // Exact match including case
+        : charExpected.toLowerCase() === charActual.toLowerCase();  // Case-insensitive match
+        
+      if (isCharCorrect) {
+        // Correct character
+        chars.push({
+          type: 'char-correct',
+          text: charActual 
+        });
+        offsetExpected++;
+        offsetActual++;
+      } else {
+        // Look ahead for potential alignment
+        const lookAheadLimit = 3;
+        let foundMatch = false;
+        
+        // Check if we can find this expected character later in the actual text
+        for (let i = 1; i <= lookAheadLimit && offsetActual + i < actualChars.length; i++) {
+          if ((checkCase && expectedChars[offsetExpected] === actualChars[offsetActual + i]) ||
+              (!checkCase && expectedChars[offsetExpected].toLowerCase() === actualChars[offsetActual + i].toLowerCase())) {
+            // Found a match ahead, mark characters in between as incorrect
+            for (let j = 0; j < i; j++) {
+              chars.push({
+                type: 'char-incorrect',
+                text: actualChars[offsetActual + j]
+              });
+            }
+            offsetActual += i;
+            foundMatch = true;
+            break;
+          }
+        }
+        
+        // If no match found ahead in actual text, check if character was omitted 
+        if (!foundMatch) {
+          // See if next actual character matches with a later expected character
+          for (let i = 1; i <= lookAheadLimit && offsetExpected + i < expectedChars.length; i++) {
+            if ((checkCase && expectedChars[offsetExpected + i] === actualChars[offsetActual]) || 
+                (!checkCase && expectedChars[offsetExpected + i].toLowerCase() === actualChars[offsetActual].toLowerCase())) {
+              // Found a match later in expected - user omitted characters
+              for (let j = 0; j < i; j++) {
+                chars.push({
+                  type: 'char-placeholder',
+                  text: '_'
+                });
+                offsetExpected++;
+              }
+              foundMatch = true;
+              break;
+            }
+          }
+        }
+        
+        // If still no alignment found, just mark as incorrect and move both pointers
+        if (!foundMatch) {
+          chars.push({
+            type: 'char-incorrect',
+            text: charActual
+          });
+          offsetActual++;
+          offsetExpected++;
+        }
       }
     }
     
-    // Limit extra characters to prevent them from appearing oddly
-    const maxExtraChars = 2; // Only show up to 2 extra characters
-    if (actualChars.length > expectedChars.length) {
-      for (let j = expectedChars.length; j < Math.min(actualChars.length, expectedChars.length + maxExtraChars); j++) {
-        chars.push({
-          type: 'char-extra',
-          text: actualChars[j]
-        });
-      }
+    // Add any remaining actual characters as extra
+    while (offsetActual < actualChars.length) {
+      chars.push({
+        type: 'char-extra',
+        text: actualChars[offsetActual]
+      });
+      offsetActual++;
     }
     
     return chars;
