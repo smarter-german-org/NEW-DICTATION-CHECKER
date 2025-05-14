@@ -14,6 +14,13 @@ const DictationFeedback = ({
   const normalizeGermanText = (text) => {
     if (!text) return '';
     
+    // TEST: Log a specific test case
+    if (text === 'schoener') {
+      console.log('FOUND schoener, will transform to schöner');
+    }
+    
+    console.log('BEFORE normalization:', text);
+    
     // Simple direct replacement of common umlaut alternative notations
     // Order matters - doing all replacements in one pass
     let normalized = text
@@ -36,6 +43,8 @@ const DictationFeedback = ({
     if (text.toLowerCase() === 'schoener') normalized = 'schöner';
     if (text.toLowerCase() === 'schoen') normalized = 'schön';
     if (text.toLowerCase() === 'felle') normalized = 'fälle';
+    
+    console.log('AFTER normalization:', normalized);
     
     return normalized;
   };
@@ -254,12 +263,19 @@ const DictationFeedback = ({
       }
     }, [activeTooltip]);
     
+    console.log('PROCESSING userText:', userText);
+    
     // CRITICAL: First normalize the complete userText for German umlauts, then split
     const normalizedUserText = normalizeGermanText(userText);
+    
+    console.log('NORMALIZED complete text:', normalizedUserText);
     
     // Split both texts into words, preserving punctuation
     const userWords = normalizedUserText.split(/\s+/).filter(Boolean);
     const expectedWords = expectedText.split(/\s+/).filter(Boolean);
+    
+    console.log('SPLIT user words:', userWords);
+    console.log('EXPECTED words:', expectedWords);
     
     // Helper function to render tooltip with appropriate positioning
     const renderTooltip = (tooltipId, content) => {
@@ -284,6 +300,8 @@ const DictationFeedback = ({
     for (let i = 0; i < userWords.length; i++) {
       // Get the already normalized word and just clean punctuation
       const cleanUserWord = userWords[i].toLowerCase().replace(/[^\w\säöüß]/g, '');
+      
+      console.log(`PROCESSING word[${i}]:`, userWords[i], '→ cleaned:', cleanUserWord);
       
       // Check each expected word for a match
       let bestMatchIndex = -1;

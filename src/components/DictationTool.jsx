@@ -14,8 +14,33 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
   
   // Normalize the strings by removing punctuation, multiple spaces, etc.
   const normalizeText = (text, preserveCase = false) => {
-    // First handle the case
-    let normalized = preserveCase ? text : text.toLowerCase();
+    // First handle German umlaut alternatives
+    let normalized = text;
+    
+    // Handle common umlaut alternative notations (before case handling)
+    normalized = normalized
+      // Handle o-umlaut variations first (prioritize this for "schoener" case)
+      .replace(/oe/g, 'ö')
+      .replace(/o\//g, 'ö')
+      .replace(/o:/g, 'ö')
+      // Handle a-umlaut variations
+      .replace(/ae/g, 'ä')
+      .replace(/a\//g, 'ä')
+      .replace(/a:/g, 'ä')
+      // Handle u-umlaut variations
+      .replace(/ue/g, 'ü')
+      .replace(/u\//g, 'ü')
+      .replace(/u:/g, 'ü')
+      // Handle eszett/sharp s
+      .replace(/s\//g, 'ß');
+    
+    // Special case for common problematic words
+    if (normalized.toLowerCase() === 'schoener') normalized = 'schöner';
+    if (normalized.toLowerCase() === 'schoen') normalized = 'schön';
+    if (normalized.toLowerCase() === 'felle') normalized = 'fälle';
+    
+    // Then handle the case
+    normalized = preserveCase ? normalized : normalized.toLowerCase();
     
     // Remove punctuation but preserve umlauts and special characters
     // This only removes actual punctuation, not letters like ä, ö, ü, ß
@@ -1151,7 +1176,33 @@ const DictationTool = ({ exerciseId = 1 }) => {
     
     // Clean up expected text (remove punctuation, normalize spaces)
     const normalizeForComparison = (text, preserveCase = false) => {
-      let normalized = text
+      // First normalize German umlaut alternatives
+      let normalized = text;
+      
+      // Handle common umlaut alternative notations (before punctuation removal)
+      normalized = normalized
+        // Handle o-umlaut variations (prioritize this for "schoener" case)
+        .replace(/oe/g, 'ö')
+        .replace(/o\//g, 'ö')
+        .replace(/o:/g, 'ö')
+        // Handle a-umlaut variations
+        .replace(/ae/g, 'ä')
+        .replace(/a\//g, 'ä')
+        .replace(/a:/g, 'ä')
+        // Handle u-umlaut variations
+        .replace(/ue/g, 'ü')
+        .replace(/u\//g, 'ü')
+        .replace(/u:/g, 'ü')
+        // Handle eszett/sharp s
+        .replace(/s\//g, 'ß');
+      
+      // Special case for common problematic words
+      if (normalized.toLowerCase() === 'schoener') normalized = 'schöner';
+      if (normalized.toLowerCase() === 'schoen') normalized = 'schön';
+      if (normalized.toLowerCase() === 'felle') normalized = 'fälle';
+      
+      // Then remove punctuation and normalize spaces
+      normalized = normalized
         .replace(/[^\p{L}\p{N}\s]/gu, '')
         .replace(/\s+/g, ' ')
         .trim();
