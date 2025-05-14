@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import AudioPlayer from './AudioPlayer';
+import ConfirmDialog from './ConfirmDialog';
+import DictationFeedback from './DictationFeedback';
 import './DictationTool.css';
 
 // Character-level feedback component with improved word skipping
@@ -760,9 +762,17 @@ const DictationTool = ({ exerciseId = 1 }) => {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [checkCapitalization, setCheckCapitalization] = useState(false);
   
+  // New states for feedback and confirmation
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [showFeedbackScreen, setShowFeedbackScreen] = useState(false);
+  const [dictationTime, setDictationTime] = useState(0);
+  const [dictationStartTime, setDictationStartTime] = useState(null);
+  const [dictationResults, setDictationResults] = useState(null);
+  
   const audioRef = useRef(null);
   const inputRef = useRef(null);
   const timeoutRef = useRef(null);
+  const timerIntervalRef = useRef(null);
   const currentIndexRef = useRef(0); // Keep track of current index for closures
 
   // Update the ref whenever state changes
@@ -810,6 +820,9 @@ const DictationTool = ({ exerciseId = 1 }) => {
     setEnterKeyPressCount(0);
     setWaitingForInput(false);
     setShowFeedback(false);
+    setShowFeedbackScreen(false);
+    setDictationTime(0);
+    setDictationStartTime(null);
     
     fetch(selectedExercise.vttFile)
       .then(response => {
@@ -829,11 +842,36 @@ const DictationTool = ({ exerciseId = 1 }) => {
       });
   }, [selectedExercise]);
 
+  // Timer effect to track dictation time
+  useEffect(() => {
+    if (exerciseStarted && dictationStartTime && !showFeedbackScreen) {
+      // Clear any existing timer
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+      
+      // Start the timer interval
+      timerIntervalRef.current = setInterval(() => {
+        const elapsedSeconds = Math.floor((Date.now() - dictationStartTime) / 1000);
+        setDictationTime(elapsedSeconds);
+      }, 1000);
+    }
+    
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    };
+  }, [exerciseStarted, dictationStartTime, showFeedbackScreen]);
+
   // Cleanup timeouts when component unmounts
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+      }
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
       }
     };
   }, []);
@@ -1344,6 +1382,9 @@ const DictationTool = ({ exerciseId = 1 }) => {
   const handleStartExercise = () => {
     startExercise();
     
+    // Set the start time when exercise begins
+    setDictationStartTime(Date.now());
+    
     // Small delay to ensure state updates before playing
     setTimeout(() => {
       playCurrentSentence(0); // Explicitly play the first sentence
@@ -1391,11 +1432,98 @@ const DictationTool = ({ exerciseId = 1 }) => {
     };
   }, [selectedExercise]);
 
-  if (isLoading) {
-    return <div className="loading">Loading exercise...</div>;
-  }
+  // Handler for cancel button click
+  const handleCancelExercise = () => {
+    // Only show dialog if exercise has started
+    if (exerciseStarted) {
+      setIsConfirmDialogOpen(true);
+    }
+  };
+  
+  // Confirm cancel and show results
+  const confirmCancelExercise = () => {
+    setIsConfirmDialogOpen(false);
+    
+    // Process current input if there is any
+    if (userInput.trim() !== '') {
+      processUserInput();
+    }
+    
+    // Stop any playback and clear timers
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    
+    // Prepare results data and show feedback screen
+    prepareResultsData();
+    setShowFeedbackScreen(true);
+    setIsPlaying(false);
+  };
+  
+  // Cancel the dialog without canceling exercise
+  const closeConfirmDialog = () => {
+    setIsConfirmDialogOpen(false);
+  };
+  
+  // Prepare data for feedback screen
+  const prepareResultsData = () => {
+    // Calculate various statistics for the feedback
+    const totalSentences = sentences.length;
+    const completedSentences = sentenceResults.filter(Boolean).length;
+    
+    // Extract words for comparison
+    const allWords = sentences.flatMap(sentence => 
+      sentence.text.split(/\s+/).filter(Boolean).map(word => word.toLowerCase())
+    );
+    
+    const userWords = sentenceResults
+      .filter(Boolean)
+      .flatMap(result => 
+        result.actual.split(/\s+/).filter(Boolean).map(word => word.toLowerCase())
+      );
+    
+    const correctWords = userWords.filter(word => allWords.includes(word));
+    
+    setDictationResults({
+      totalSentences,
+      completedSentences,
+      allWords,
+      userWords,
+      correctWords
+    });
+  };
+  
+  // Handle restart from feedback screen
+  const handleRestartFromFeedback = () => {
+    setShowFeedbackScreen(false);
+    handleRestart();
+  };
 
   const isExerciseCompleted = currentSentenceIndex >= sentences.length && exerciseStarted && sentenceResults.length > 0;
+  
+  // If exercise is completed, show the feedback screen
+  useEffect(() => {
+    if (isExerciseCompleted && !showFeedbackScreen) {
+      // Stop timers
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+      
+      // Prepare results and show feedback
+      prepareResultsData();
+      setShowFeedbackScreen(true);
+    }
+  }, [isExerciseCompleted, showFeedbackScreen]);
   
   // Determine keyboard shortcut symbol based on platform
   const modifierKeySymbol = isMac ? '⌘' : 'Ctrl';
@@ -1403,6 +1531,22 @@ const DictationTool = ({ exerciseId = 1 }) => {
   const currentSentence = sentences[currentSentenceIndex];
   const currentResult = sentenceResults[currentSentenceIndex];
   
+  if (isLoading) {
+    return <div className="loading">Loading exercise...</div>;
+  }
+
+  // Show feedback screen if completed or canceled
+  if (showFeedbackScreen) {
+    return (
+      <DictationFeedback 
+        dictationResults={dictationResults}
+        sentenceResults={sentenceResults}
+        totalTime={dictationTime}
+        onRestart={handleRestartFromFeedback}
+      />
+    );
+  }
+
   return (
     <div className="dictation-tool">
       <div className="audio-section">
@@ -1415,8 +1559,20 @@ const DictationTool = ({ exerciseId = 1 }) => {
           onEnded={() => playCurrentSentence(currentSentenceIndex)}
           onPrevious={handlePreviousSentence}
           onNext={() => goToNextSentence(true)}
+          onCancel={handleCancelExercise}
         />
       </div>
+      
+      {/* Confirmation Dialog */}
+      <ConfirmDialog 
+        isOpen={isConfirmDialogOpen}
+        title="End Dictation Exercise"
+        message="Are you sure you want to end this dictation exercise? Your progress will be saved and results will be shown."
+        confirmText="End Exercise"
+        cancelText="Continue Exercise"
+        onConfirm={confirmCancelExercise}
+        onCancel={closeConfirmDialog}
+      />
       
       <div className="keyboard-shortcuts-info">
         <button 
@@ -1455,7 +1611,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
       
       {!isExerciseCompleted ? (
         <div className="input-section">
-          {exerciseStarted && (
+          {exerciseStarted ? (
             <>
               {/* Real-time character feedback displayed above input */}
               {currentSentence && (
@@ -1481,33 +1637,19 @@ const DictationTool = ({ exerciseId = 1 }) => {
                 />
               </div>
             </>
+          ) : (
+            <div className="start-section">
+              <button 
+                className="start-button"
+                onClick={handleStartExercise}
+                disabled={isLoading}
+              >
+                Start Dictation
+              </button>
+            </div>
           )}
         </div>
-      ) : (
-        <div className="results-section">
-          <h3>Exercise Complete</h3>
-          
-          {sentenceResults.map((result, index) => (
-            result && (
-              <div 
-                key={index} 
-                className={`sentence-result ${result.isCorrect ? 'correct' : 'incorrect'}`}
-              >
-                <div className="sentence-number">Sentence {index + 1}:</div>
-                <div className="expected">Expected: {result.expected}</div>
-                <div className="actual">Your input: {result.actual}</div>
-              </div>
-            )
-          ))}
-          
-          <button 
-            className="restart-button"
-            onClick={handleRestart}
-          >
-            Restart Exercise
-          </button>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 };

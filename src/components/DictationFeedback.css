@@ -1,0 +1,150 @@
+.dictation-feedback {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dictation-feedback h2 {
+  color: var(--primary);
+  margin-bottom: 24px;
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+/* Statistics section */
+.feedback-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.stat-item {
+  background-color: white;
+  border-radius: 8px;
+  padding: 16px;
+  flex: 1;
+  min-width: 150px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.stat-title {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.stat-detail {
+  font-size: 0.85rem;
+  color: #777;
+}
+
+/* Side by side comparison */
+.side-by-side-comparison {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+  .side-by-side-comparison {
+    flex-direction: column;
+  }
+}
+
+.comparison-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.comparison-column h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #444;
+  font-size: 1.1rem;
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.text-container {
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  padding: 16px;
+  min-height: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.highlighted-text {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.highlighted-text.reference {
+  color: #444;
+}
+
+.highlighted-text.user .word.correct {
+  color: #28a745;
+}
+
+.highlighted-text.user .word.incorrect {
+  color: #dc3545;
+  text-decoration: underline wavy #dc3545;
+}
+
+.highlighted-text .empty-text {
+  color: #999;
+  font-style: italic;
+}
+
+/* Restart button */
+.dictation-feedback .restart-button {
+  display: block;
+  margin: 30px auto 0;
+  padding: 12px 24px;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dictation-feedback .restart-button:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+} 
