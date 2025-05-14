@@ -6,7 +6,9 @@ const AudioPlayer = forwardRef(({
   onEnded, 
   onPlayStateChange,
   checkCapitalization = false,
-  onToggleCapitalization = () => {}
+  onToggleCapitalization = () => {},
+  onPrevious = () => {},
+  onNext = () => {}
 }, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -93,16 +95,24 @@ const AudioPlayer = forwardRef(({
   };
   
   const handleRewind = () => {
-    if (!isLoaded) return;
-    audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - 5);
+    if (onPrevious) {
+      onPrevious();
+    } else {
+      if (!isLoaded) return;
+      audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - 5);
+    }
   };
   
   const handleForward = () => {
-    if (!isLoaded) return;
-    audioRef.current.currentTime = Math.min(
-      audioRef.current.duration,
-      audioRef.current.currentTime + 5
-    );
+    if (onNext) {
+      onNext();
+    } else {
+      if (!isLoaded) return;
+      audioRef.current.currentTime = Math.min(
+        audioRef.current.duration,
+        audioRef.current.currentTime + 5
+      );
+    }
   };
 
   const handleReset = () => {
@@ -180,7 +190,7 @@ const AudioPlayer = forwardRef(({
             className="control-button" 
             onClick={handleRewind}
             disabled={!isLoaded}
-            title="Previous 5 seconds"
+            title="Previous Sentence"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M15 18l-6-6 6-6" />
@@ -208,7 +218,7 @@ const AudioPlayer = forwardRef(({
             className="control-button" 
             onClick={handleForward}
             disabled={!isLoaded}
-            title="Next 5 seconds"
+            title="Next Sentence"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 18l6-6-6-6" />

@@ -628,8 +628,13 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
               </span>
             );
           case 'extra':
+            // Don't show extra words at the end of the expected text
+            // Check if this is at the end of the diff array, excluding spaces
+            const isAtEnd = index === diff.length - 1 || 
+              (index === diff.length - 3 && diff[diff.length - 1].type === 'space' && diff[diff.length - 2].type === 'extra');
+            
             return (
-              <span key={index} className="word-extra">
+              <span key={index} className={`word-extra ${isAtEnd ? 'word-extra-hidden' : ''}`}>
                 {item.text}
               </span>
             );
@@ -992,13 +997,14 @@ const DictationTool = ({ exerciseId = 1 }) => {
     // Use the appropriate modifier key based on platform
     const isModifierKeyPressed = isMac ? e.metaKey : e.ctrlKey;
     
-    if (e.key === 'Enter' && !isModifierKeyPressed && !navigationInProgress) {
-      e.preventDefault();
+    if (e.key === 'Enter' && !isModifierKeyPressed && !navigationInProgress && !isPlaying) {
+      e.preventDefault(); // Prevent default Enter behavior that might trigger audio skip
       console.log('[ENTER KEY PRESSED]', {
         currentSentenceIndex,
         userInput,
         navigationInProgress,
-        isPlaying
+        isPlaying,
+        waitingForInput
       });
       setEnterKeyPressCount(prev => prev + 1);
       
@@ -1058,6 +1064,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
           setTimeout(() => {
             if (inputRef.current) {
               inputRef.current.focus();
+              // Always set waiting for input when audio finishes
               setWaitingForInput(true);
               console.log('[FOCUS]', 'Input field focused after audio stopped');
             }
@@ -1207,9 +1214,10 @@ const DictationTool = ({ exerciseId = 1 }) => {
       waitingForInput
     });
     
-    // For button clicks and Enter key, require input and prevent if navigation in progress
+    // For button clicks and Enter key, don't require waitingForInput state
+    // Only check for navigation in progress and empty input
     // Enable force processing for first sentence
-    const forceProcess = currentSentenceIndex === 0 && waitingForInput;
+    const forceProcess = currentSentenceIndex === 0;
     
     // Check if we can proceed
     if ((userInput.trim() === '' && !forceProcess) || navigationInProgress) {
@@ -1405,6 +1413,8 @@ const DictationTool = ({ exerciseId = 1 }) => {
           checkCapitalization={checkCapitalization}
           onToggleCapitalization={() => setCheckCapitalization(prev => !prev)}
           onEnded={() => playCurrentSentence(currentSentenceIndex)}
+          onPrevious={handlePreviousSentence}
+          onNext={() => goToNextSentence(true)}
         />
       </div>
       
