@@ -1,0 +1,106 @@
+.audio-player {
+  background-color: var(--primary);
+  border-radius: 30px;
+  padding: 15px 25px;
+  box-shadow: 0 4px 12px rgba(139, 65, 160, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.player-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.play-button {
+  background-color: var(--primary-light);
+  color: var(--white);
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.play-button:hover:not(:disabled) {
+  background-color: #d36dd4;
+  transform: scale(1.05);
+}
+
+.play-button:disabled {
+  background-color: #555;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.control-button {
+  background-color: transparent;
+  color: var(--white);
+  border: none;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 16px;
+}
+
+.control-button:hover:not(:disabled) {
+  color: var(--primary-light);
+  transform: scale(1.1);
+}
+
+.control-button:disabled {
+  color: rgba(255, 255, 255, 0.4);
+  cursor: not-allowed;
+}
+
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 8px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: var(--primary-light);
+  border-radius: 4px;
+  transition: width 0.1s linear;
+}
+
+.time-display {
+  display: flex;
+  justify-content: space-between;
+  color: var(--white);
+  font-size: 14px;
+  font-family: monospace;
+}
+
+.current-time, .duration {
+  opacity: 0.9;
+} 
