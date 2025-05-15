@@ -209,59 +209,6 @@ const DictationFeedback = ({
       }
     };
     
-    // Custom function to check if words are similar but should be considered incorrect
-    const shouldMarkAsIncorrect = (refWord, userWord) => {
-      if (!refWord || !userWord) return true;
-      
-      // Convert to lowercase for comparison
-      const refLower = refWord.toLowerCase();
-      const userLower = userWord.toLowerCase();
-      
-      // Special cases for common German mistakes that should be marked incorrect
-      
-      // Case 1: schöner vs schoner (missing umlaut)
-      if ((refLower === 'schöner' && userLower === 'schoner') ||
-          (refLower === 'schön' && userLower === 'schon')) {
-        return true;
-      }
-      
-      // Case 2: Berlin vs balin/berlin (capital city error)
-      if (refLower === 'berlin' && (userLower === 'balin' || userLower === 'berlim')) {
-        return true;
-      }
-      
-      // Case 3: montagmorgen vs montagmorgan 
-      if (refLower === 'montagmorgen' && (userLower === 'montagmorgan' || userLower === 'montakmorgen')) {
-        return true;
-      }
-      
-      // Special case for missing key letters in German words
-      if (refLower.includes('ö') && userLower.replace('o', 'ö') === refLower) {
-        return true; // Missing umlaut
-      }
-      
-      if (refLower.includes('ä') && userLower.replace('a', 'ä') === refLower) {
-        return true; // Missing umlaut
-      }
-      
-      if (refLower.includes('ü') && userLower.replace('u', 'ü') === refLower) {
-        return true; // Missing umlaut
-      }
-      
-      // Check for "en" vs "an" endings which is a common German mistake
-      if (refLower.endsWith('en') && userLower.endsWith('an') && 
-          refLower.slice(0, -2) === userLower.slice(0, -2)) {
-        return true;
-      }
-      
-      // Force mark balin as incorrect consistently
-      if (userLower === 'balin') {
-        return true;
-      }
-      
-      return false;
-    };
-    
     // Render elements based on alignment
     const renderElements = alignment.map((pair, idx) => {
       let className = '';
@@ -270,17 +217,13 @@ const DictationFeedback = ({
       let displayText = pair.user;
       let isCorrect = false;
       
-      // Check if the words are similar using the more sophisticated matching
+      // Use strict exact matching (100% match required) for visual display
+      // This matches the statistics calculation for consistency
       if (pair.op === 'match') {
         isCorrect = true;
       } else if (pair.op === 'sub' && pair.ref && pair.user) {
-        // First check with our custom function for known incorrect patterns
-        if (shouldMarkAsIncorrect(pair.ref, pair.user)) {
-          isCorrect = false;
-        } else {
-          // Otherwise use the general similarity check
-          isCorrect = areSimilarWords(pair.ref, pair.user);
-        }
+        // Use the same strict matching as statistics with areExactlyEqual
+        isCorrect = areExactlyEqual(pair.user, pair.ref, dictationResults.checkCapitalization);
       }
       
       if (isCorrect) {
