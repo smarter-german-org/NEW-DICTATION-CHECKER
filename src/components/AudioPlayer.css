@@ -1,62 +1,112 @@
+/* Audio Player Component Styles */
 .audio-player {
-  background-color: #9c27b0; /* Purple color as shown in the image */
-  border-radius: 10px;
-  padding: 10px 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #1a1a1a;
+  margin-bottom: 10px;
 }
 
 .player-container {
-  display: flex;
-  align-items: center;
-}
-
-.controls-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-right: 20px;
-}
-
-.progress-wrapper {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 15px;
 }
 
-.progress-bar-container {
+.controls-left {
   display: flex;
   align-items: center;
+  gap: 10px;
+  margin-right: 5px;
+}
+
+.control-button {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.control-button:hover:not(:disabled) {
+  background-color: #3a3a3a;
+  transform: translateY(-1px);
+}
+
+.control-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.play-button {
+  background-color: #FF5500;
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.play-button:hover:not(:disabled) {
+  background-color: #FF6600;
+  transform: translateY(-1px);
+}
+
+.play-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.progress-wrapper {
   flex: 1;
-  gap: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.progress-bar-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .progress-bar {
   flex: 1;
-  height: 6px;
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 3px;
-  position: relative;
+  height: 4px;
+  background-color: #2a2a2a;
+  border-radius: 2px;
   cursor: pointer;
   overflow: hidden;
+  position: relative;
 }
 
 .progress-fill {
+  height: 100%;
+  background-color: #FF5500;
+  border-radius: 2px;
   position: absolute;
   top: 0;
   left: 0;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.9);
-  border-radius: 3px;
-  transition: width 0.1s linear;
+  transition: width 0.1s;
 }
 
 .time-display {
-  color: rgba(255, 255, 255, 0.9);
   font-size: 14px;
+  color: #a0a0a0;
   white-space: nowrap;
+  margin-left: 10px;
   min-width: 90px;
 }
 
@@ -66,90 +116,53 @@
   gap: 8px;
 }
 
-.control-button {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 0;
-}
-
-.control-button:hover:not(:disabled) {
-  background-color: rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
-}
-
-.control-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.play-button {
-  background-color: rgba(255, 255, 255, 0.9);
-  color: #9c27b0;
-  border: none;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.play-button:hover:not(:disabled) {
-  transform: scale(1.05);
-}
-
-.play-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.play-button svg {
-  fill: #9c27b0;
-}
-
 .option-toggle {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
   border: none;
   border-radius: 4px;
   padding: 6px 10px;
   font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.option-toggle.active {
-  background-color: rgba(255, 255, 255, 0.9);
-  color: #9c27b0;
-  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .option-toggle:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: #3a3a3a;
+}
+
+.option-toggle.active {
+  background-color: #3a3a3a;
+  color: #FF5500;
+}
+
+.cancel-button {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: #3a3a3a;
+  color: #FF5252;
 }
 
 .playback-speed-button {
   width: 50px;
   min-width: 50px;
   text-align: center;
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
   border: none;
   border-radius: 4px;
   padding: 6px 10px;
@@ -162,36 +175,23 @@
 }
 
 .playback-speed-button:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: #3a3a3a;
 }
 
 .playback-speed-button.active {
-  background-color: rgba(255, 255, 255, 0.9);
-  color: #9c27b0;
+  background-color: #3a3a3a;
+  color: #FF5500;
   font-weight: 500;
 }
 
-.cancel-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-  border-radius: 50%;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  margin-left: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.cancel-button:hover {
-  background-color: #f1aeb5;
-  transform: scale(1.05);
-}
-
-.cancel-button:active {
-  transform: scale(0.95);
+/* Remove responsive layout to ensure all controls stay in a single line */
+@media (max-width: 768px) {
+  .time-display {
+    font-size: 12px;
+    min-width: 70px;
+  }
+  
+  .option-toggle, .playback-speed-button, .cancel-button {
+    padding: 6px 8px;
+  }
 } 

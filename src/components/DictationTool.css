@@ -1,13 +1,45 @@
+/* Root variables for the dark theme */
+:root {
+  --background-dark: #1a1a1a;
+  --background-darker: #151515;
+  --background-card: #212121;
+  --background-input: #1c1c1c;
+  --text-light: #e0e0e0;
+  --text-gray: #a0a0a0;
+  --primary: #FF5500;
+  --primary-dark: #E64A00;
+  --primary-light: rgba(255, 85, 0, 0.2);
+  --error-red: #FF5252;
+  --success-green: #28a745;
+  --gray: #4a4a4a;
+  --gray-light: #2a2a2a;
+  --gray-dark: #3a3a3a;
+  --white: #f0f0f0;
+  --black: #000000;
+  --correct: #28a745;
+  --incorrect: #FF5252;
+  --orange: #FF5500;
+  --orange-hover: #FF6600;
+}
+
+body {
+  background-color: var(--background-dark);
+  color: var(--text-light);
+}
+
 .dictation-tool {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  background-color: var(--background-dark);
+  padding: 20px;
+  border-radius: 10px;
 }
 
 .loading {
   text-align: center;
   padding: 20px;
-  color: var(--primary);
+  color: var(--text-light);
   font-size: 1.2rem;
   font-weight: 500;
   animation: pulse 1.5s infinite ease-in-out;
@@ -41,18 +73,18 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .start-button:hover {
-  background-color: var(--primary-dark);
+  background-color: var(--orange-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
 .sentence-counter {
   text-align: center;
-  color: var(--primary);
+  color: var(--text-light);
   font-weight: 500;
   margin-bottom: 10px;
 }
@@ -63,9 +95,13 @@
   margin-top: 10px;
   margin-bottom: 15px;
   padding: 10px 15px;
-  border-left: 3px solid var(--primary);
-  background-color: rgba(156, 39, 176, 0.03);
-  border-radius: 0 4px 4px 0;
+  border-left: none;
+  background-color: var(--background-darker);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 56px;
 }
 
 /* Ensure cursor blinks visibly */
@@ -76,17 +112,19 @@
 
 .dictation-input {
   width: 100%;
-  padding: 10px 0;
-  font-size: 18px;
+  padding: 0;
+  font-size: 20px;
   border: none;
   background-color: transparent;
-  min-height: 60px;
+  height: 36px;
   resize: none;
   transition: all 0.2s ease;
   display: block;
   caret-color: var(--primary);
   animation: blink-caret 1s step-end infinite;
-  color: var(--text);
+  color: var(--text-light);
+  line-height: 1.5;
+  font-family: sans-serif;
 }
 
 .dictation-input:focus {
@@ -116,7 +154,7 @@
 
 /* Character feedback styles */
 .feedback-container {
-  background-color: var(--white);
+  background-color: var(--background-card);
   border-radius: 8px;
   padding: 15px;
   border: 2px solid var(--gray);
@@ -130,13 +168,18 @@
 }
 
 .feedback-container.real-time {
-  background-color: transparent;
+  background-color: var(--background-darker);
   border: none;
   padding: 10px 15px;
   margin-bottom: 0;
-  font-size: 18px;
-  min-height: 40px;
-  border-bottom: none;
+  font-size: 20px;
+  height: 56px;
+  border-left: none;
+  border-radius: 4px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 @keyframes fadeIn {
@@ -155,13 +198,16 @@
   white-space: pre-wrap;
   word-break: break-word;
   font-family: sans-serif;
-  font-size: 1.2rem;
+  font-size: 20px;
   line-height: 1.5;
+  padding: 0;
+  height: 36px;
+  color: var(--text-light);
 }
 
 /* Updated styles for word-based feedback */
 .word-correct {
-  color: #28a745; /* Green */
+  color: var(--text-light);
   font-weight: 500;
   margin-right: 4px;
 }
@@ -170,23 +216,23 @@
   display: inline-block;
   border-radius: 3px;
   padding: 0 1px;
-  background-color: rgba(255, 235, 205, 0.3);
+  background-color: rgba(98, 0, 234, 0.1);
   position: relative;
   margin-right: 4px;
 }
 
 .word-missing {
-  color: #6c757d; /* Gray */
+  color: var(--text-gray);
   opacity: 0.7;
-  letter-spacing: 1px;
+  letter-spacing: 3px;
   font-weight: 500;
-  white-space: nowrap; /* Keep underscores together */
+  white-space: nowrap;
   display: inline-block;
   margin-right: 4px;
 }
 
 .word-extra {
-  color: #ff5252;
+  color: var(--error-red);
   opacity: 0.8;
   text-decoration: line-through;
   margin-left: 4px;
@@ -207,39 +253,39 @@
 
 /* Character-level styles */
 .char-correct {
-  color: #28a745; /* Green */
+  color: var(--text-light);
   font-weight: 500;
 }
 
 .char-incorrect {
-  color: #dc3545; /* Red */
+  color: var(--error-red);
   font-weight: 500;
   text-decoration: underline;
   text-decoration-style: wavy;
-  text-decoration-color: #dc3545;
+  text-decoration-color: var(--error-red);
 }
 
 .char-placeholder {
-  color: #6c757d; /* Gray */
+  color: var(--text-gray);
   opacity: 0.7;
   font-weight: 500;
-  letter-spacing: 0;
+  letter-spacing: 3px;
   margin: 0 1px;
 }
 
 .char-extra {
-  color: #dc3545; /* Red */
+  color: var(--error-red);
   text-decoration: line-through;
   font-weight: 500;
 }
 
 /* Keep older styles for backward compatibility */
 .word-incorrect {
-  color: #dc3545; /* Red */
+  color: var(--error-red);
   font-weight: 500;
   text-decoration: underline;
   text-decoration-style: wavy;
-  text-decoration-color: #dc3545;
+  text-decoration-color: var(--error-red);
 }
 
 /* Keyboard shortcuts panel */
@@ -250,18 +296,19 @@
 }
 
 .shortcuts-toggle {
-  background-color: var(--gray-light);
-  border: 1px solid var(--gray);
+  background-color: #252525;
+  border: 1px solid #333333;
   border-radius: 4px;
   padding: 6px 12px;
   font-size: 14px;
   cursor: pointer;
-  color: var(--text);
+  color: #a0a0a0;
   transition: all 0.2s ease;
 }
 
 .shortcuts-toggle:hover {
-  background-color: var(--gray);
+  background-color: #333333;
+  color: #e0e0e0;
 }
 
 .shortcuts-panel {
@@ -269,11 +316,11 @@
   right: 0;
   top: 100%;
   margin-top: 5px;
-  background-color: white;
-  border: 1px solid var(--gray);
+  background-color: #252525;
+  border: 1px solid #333333;
   border-radius: 5px;
-  padding: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   z-index: 100;
   min-width: 280px;
   opacity: 0;
@@ -291,32 +338,35 @@
 .shortcut-row {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   font-size: 14px;
 }
 
 .shortcut-keys {
   display: flex;
   align-items: center;
-  min-width: 80px;
+  min-width: 110px;
 }
 
 .shortcut-description {
-  color: var(--text);
+  color: #a0a0a0;
+  font-size: 15px;
 }
 
 kbd {
   display: inline-block;
-  background-color: #f7f7f7;
-  border: 1px solid #ccc;
+  background-color: #1a1a1a;
+  border: 1px solid #444444;
   border-radius: 3px;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-  color: #333;
-  font-size: 11px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+  color: #e0e0e0;
+  font-size: 12px;
   font-family: monospace;
   line-height: 1;
-  padding: 3px 5px;
-  margin: 0 2px;
+  padding: 5px 8px;
+  margin: 0 5px;
+  min-width: 18px;
+  text-align: center;
   white-space: nowrap;
   vertical-align: middle;
 }
@@ -338,12 +388,13 @@ kbd {
 }
 
 .next-button {
-  background-color: var(--primary);
-  color: var(--white);
+  background-color: var(--gray-light);
+  color: var(--text-light);
 }
 
 .next-button:hover:not(:disabled) {
-  background-color: var(--primary-dark);
+  background-color: var(--gray-dark);
+  color: var(--primary);
   transform: translateY(-1px);
 }
 
@@ -355,12 +406,13 @@ kbd {
 
 .play-again-button {
   background-color: var(--gray-light);
-  color: var(--text);
+  color: var(--text-light);
   border: 1px solid var(--gray);
 }
 
 .play-again-button:hover {
-  background-color: var(--gray);
+  background-color: var(--gray-dark);
+  color: var(--primary);
 }
 
 .restart-button {
@@ -370,7 +422,7 @@ kbd {
 }
 
 .restart-button:hover {
-  background-color: var(--primary-dark);
+  background-color: var(--orange-hover);
   transform: translateY(-1px);
 }
 
@@ -378,7 +430,7 @@ kbd {
   margin-top: 20px;
   padding: 20px;
   border-radius: 8px;
-  background-color: var(--gray-light);
+  background-color: var(--background-card);
   border: 1px solid var(--gray);
   display: flex;
   flex-direction: column;
@@ -386,7 +438,7 @@ kbd {
 }
 
 .results-section h3 {
-  color: var(--primary);
+  color: var(--text-light);
   margin-bottom: 20px;
   font-size: 1.5rem;
 }
@@ -396,7 +448,7 @@ kbd {
   margin-bottom: 15px;
   padding: 15px;
   border-radius: 8px;
-  background-color: var(--white);
+  background-color: var(--background-darker);
 }
 
 .sentence-result.correct {
@@ -410,15 +462,17 @@ kbd {
 .sentence-number {
   font-weight: bold;
   margin-bottom: 5px;
-  color: var(--primary);
+  color: var(--text-light);
 }
 
 .expected {
   margin-bottom: 5px;
+  color: var(--text-light);
 }
 
 .actual {
   font-style: italic;
+  color: var(--text-gray);
 }
 
 /* Progress indicator styles */
@@ -448,17 +502,17 @@ kbd {
 .progress-dot.current {
   transform: scale(1.2);
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(139, 65, 160, 0.3);
+  box-shadow: 0 0 0 2px rgba(255, 85, 0, 0.3);
 }
 
 .progress-dot.correct {
-  background-color: #28a745;
-  border-color: #28a745;
+  background-color: var(--success-green);
+  border-color: var(--success-green);
 }
 
 .progress-dot.incorrect {
-  background-color: #dc3545;
-  border-color: #dc3545;
+  background-color: var(--error-red);
+  border-color: var(--error-red);
 }
 
 /* Display all dots in a wrap for many sentences */
@@ -486,7 +540,7 @@ kbd {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  color: var(--text);
+  color: var(--text-light);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -523,8 +577,8 @@ kbd {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f0f0f0;
-  border: 1px solid #ccc;
+  background-color: var(--gray-light);
+  border: 1px solid var(--gray);
   border-radius: 6px;
   padding: 8px 12px;
   cursor: pointer;
@@ -532,19 +586,20 @@ kbd {
   transition: all 0.2s ease;
   font-size: 14px;
   font-weight: 500;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  color: var(--text-light);
 }
 
 .hint-button:hover {
-  background-color: #e6f7ff;
-  border-color: #1890ff;
+  background-color: var(--primary-light);
+  border-color: var(--primary);
   transform: translateY(-1px);
 }
 
 .hint-button.active {
-  background-color: #e6f7ff;
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  background-color: var(--primary-light);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(98, 0, 234, 0.2);
 }
 
 .hint-icon {
