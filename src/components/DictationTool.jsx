@@ -13,38 +13,6 @@ import {
 } from '../utils/textUtils';
 import { debug } from '../utils/debug';
 import './DictationTool.css';
-import { initDictationMatcher, matchWord, alignWithMatcher } from '../utils/dictationMatcher';
-
-/**
- * Scoring System Options:
- * 
- * Option 1: Time-based scoring with hint penalties
- * - Base score = 100 points
- * - Subtract points based on time taken (-1 point per 5 seconds)
- * - Apply penalties for hint usage: 
- *   - Level 1 hint = -10% of total score
- *   - Level 2 hint = -25% of total score
- * - Implementation would track when hints are activated and apply
- *   the corresponding penalty to the final score
- * 
- * Option 2: Word accuracy scoring with hint modifiers
- * - Base score = percentage of words typed correctly
- * - Multiply by a speed factor (words per minute / 10)
- * - Apply multiplier penalty based on hint level:
- *   - Level 1 = 0.8x multiplier
- *   - Level 2 = 0.6x multiplier
- * - Can be calculated using existing dictationResults data
- * 
- * Option 3: Progression-based scoring
- * - Award points for each correct word (10 points per word)
- * - Award combo bonuses for streaks of correct words
- *   - 3+ consecutive correct words = 1.5x points
- *   - 5+ consecutive correct words = 2x points
- * - Subtract percentage of final score when hints are used:
- *   - Level 1 = -20% of total score
- *   - Level 2 = -40% of total score
- * - Would require tracking consecutive correct words
- */
 
 // Character-level feedback component with improved word skipping
 const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) => {
@@ -66,112 +34,7 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
     const result = [];
     let actualWordIndex = 0;
     
-    // First check if we're dealing with a partial first word match like "s" for "Es"
-    if (actualWords.length > 0 && expectedWords.length > 0) {
-      const firstExpected = expectedWords[0];
-      const firstActual = actualWords[0];
-      
-      // Special case for partial first word
-      if (firstActual.length === 1 && 
-          firstExpected.length > 1 && 
-          firstExpected.toLowerCase().includes(firstActual.toLowerCase())) {
-        
-        // Create partial match for first word
-        result.push({
-          type: 'partial',
-          chars: compareChars(firstExpected, firstActual, checkCapitalization)
-        });
-        
-        // Add space
-        if (expectedWords.length > 1) {
-          result.push({
-            type: 'space',
-            text: ' '
-          });
-        }
-        
-        // Check the second word if we have at least two actual words and two expected words
-        if (actualWords.length > 1 && expectedWords.length > 1) {
-          const secondExpected = expectedWords[1];
-          const secondActual = actualWords[1];
-          
-          // If second word also appears to be a partial match (like "st" for "ist")
-          if (secondActual.length < secondExpected.length && 
-              secondExpected.toLowerCase().includes(secondActual.toLowerCase())) {
-            
-            // Add partial match for second word
-            result.push({
-              type: 'partial',
-              chars: compareChars(secondExpected, secondActual, checkCapitalization)
-            });
-            
-            // Add space if needed
-            if (expectedWords.length > 2) {
-              result.push({
-                type: 'space',
-                text: ' '
-              });
-            }
-            
-            // Start processing from the third word
-            actualWordIndex = 2;
-            
-            // Process remaining expected words using standard logic
-            for (let i = 2; i < expectedWords.length; i++) {
-              if (actualWordIndex >= actualWords.length) {
-                result.push({
-                  type: 'missing',
-                  text: expectedWords[i]
-                });
-              } else {
-                // Apply standard matching logic for remaining words
-                // This would be the same logic as in the main loop below
-                // but would need to be duplicated for this special case
-                // For simplicity, we'll mark any subsequent words as missing
-                result.push({
-                  type: 'missing',
-                  text: expectedWords[i]
-                });
-              }
-              
-              // Add space between words except for the last one
-              if (i < expectedWords.length - 1) {
-                result.push({
-                  type: 'space',
-                  text: ' '
-                });
-              }
-            }
-            
-            // Add any remaining actual words that weren't matched
-            while (actualWordIndex < actualWords.length) {
-              if (result.length > 0 && result[result.length - 1].type !== 'space') {
-                result.push({
-                  type: 'space',
-                  text: ' '
-                });
-              }
-              
-              result.push({
-                type: 'extra',
-                text: actualWords[actualWordIndex]
-              });
-              actualWordIndex++;
-            }
-            
-            return result;
-          } else {
-            // Second word doesn't match partial, so start standard processing from second word
-            actualWordIndex = 1;
-          }
-        } else {
-          // Only one word in expected or actual, start standard processing from second word
-          actualWordIndex = 1;
-        }
-      }
-    }
-    
-    // Standard processing for the general case
+    // Process each expected word
     for (let i = 0; i < expectedWords.length; i++) {
       const expectedWord = expectedWords[i];
       const normalizedExpectedWord = normalizeText(expectedWord, checkCapitalization);
@@ -200,14 +63,14 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
           if (checkCapitalization) {
             // Normalize both words for umlauts before checking capitalization
             const normalizedCandidate = normalizeText(candidateWord, true);
-            const normalizedExpectedWord = normalizeText(expectedWord, true);
+            const normalizedExpected = normalizeText(expectedWord, true);
             
             // When checking capitalization, require exact match but with umlaut normalization
-            if (normalizedCandidate === normalizedExpectedWord) {
+            if (normalizedCandidate === normalizedExpected) {
               score = 1;
             }
             // Special case when case is different but spelling is similar (e.g., "balin" vs "Berlin")
-            else if (normalizedCandidate.toLowerCase() === normalizedExpectedWord.toLowerCase()) {
+            else if (normalizedCandidate.toLowerCase() === normalizedExpected.toLowerCase()) {
               score = 0.95; // High score for same word with different case
             }
             // If no exact match but similar spelling, give higher score than usual
@@ -416,98 +279,11 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
       return chars;
     }
     
-    // Check for compound word matching - enhanced to handle suffixes better
-    const expectedLower = expected.toLowerCase();
-    const actualLower = actual.toLowerCase();
-    
-    // Special case for "antagmorgen" vs "Montagmorgen" type matches
-    // where prefix has changed but most of word is the same
-    if (actualLower.length >= 6 && expectedLower.length >= 6) {
-      // Check if the words share a common suffix after removing first few characters
-      const actualSuffix = actualLower.substring(3);
-      const expectedSuffix = expectedLower.substring(3);
-      
-      if (actualSuffix === expectedSuffix && actualSuffix.length >= 4) {
-        // Found a case where prefix differs but rest of word matches
-        
-        // Add the different prefix characters
-        for (let i = 0; i < 3; i++) {
-          if (i < actual.length) {
-            // Show user's prefix characters as incorrect
-            chars.push({
-              type: 'char-incorrect',
-              text: actual[i]
-            });
-          }
-        }
-        
-        // Add the matching suffix characters as correct
-        for (let i = 3; i < actual.length; i++) {
-          const actualChar = actual[i];
-          const expectedPosInSuffix = i - 3;
-          const expectedChar = expectedSuffix[expectedPosInSuffix];
-          
-          // Check if characters match (with case sensitivity if needed)
-          const isMatch = checkCase 
-            ? expectedChar === actualChar
-            : expectedChar.toLowerCase() === actualChar.toLowerCase();
-          
-          chars.push({
-            type: isMatch ? 'char-correct' : 'char-incorrect',
-            text: actualChar
-          });
-        }
-        
-        // If expected word is longer, add placeholders for the missing characters
-        if (expected.length > actual.length) {
-          for (let i = actual.length; i < expected.length; i++) {
-            const expectedChar = expected[i];
-            chars.push({
-              type: 'char-placeholder',
-              text: isPunctuation(expectedChar) ? expectedChar : '_'
-            });
-          }
-        }
-        
-        return chars;
-      }
-    }
-    
-    // Check if the actual word is a suffix of the expected word
-    // E.g., "tagmorgen" in "Montagmorgen"
-    if (expectedLower.endsWith(actualLower) && actualLower.length >= 4) {
-      const startPos = expectedLower.length - actualLower.length;
-      
-      // Add placeholders for missing prefix characters
-      for (let i = 0; i < startPos; i++) {
-        const expectedChar = expected[i];
-        chars.push({
-          type: 'char-placeholder',
-          text: isPunctuation(expectedChar) ? expectedChar : '_'
-        });
-      }
-      
-      // Add the matched part with character-by-character comparison
-      for (let i = 0; i < actual.length; i++) {
-        const expectedChar = expected[startPos + i];
-        const actualChar = actual[i];
-        
-        const isMatch = checkCase 
-          ? expectedChar === actualChar
-          : expectedChar.toLowerCase() === actualChar.toLowerCase();
-        
-        chars.push({
-          type: isMatch ? 'char-correct' : 'char-incorrect',
-          text: actualChar
-        });
-      }
-      
-      return chars;
-    }
-    
-    // Check for substring match (like "tagmorgen" somewhere in "Montagmorgen")
-    if (expected && actual && expectedLower.includes(actualLower) && actualLower.length >= 4) {
+    // Check for compound word match first (like "morgen" in "Montagmorgen")
+    if (expected && actual && expected.toLowerCase().includes(actual.toLowerCase())) {
       // Find the position where the actual word appears in the expected word
+      const actualLower = actual.toLowerCase();
+      const expectedLower = expected.toLowerCase();
       const startPos = expectedLower.indexOf(actualLower);
       
       // Add placeholders for prefix characters
@@ -886,34 +662,6 @@ const SAMPLE_EXERCISES = [
   }
 ];
 
-// Helper component for the hint button
-const HintButton = ({ onClick, hintLevel }) => {
-  const getHintLabel = () => {
-    switch(hintLevel) {
-      case 0: return 'Show Hints';
-      case 1: return 'First Letter Hints';
-      case 2: return 'More Hints';
-      default: return 'Hints';
-    }
-  };
-  
-  const getHintIcon = () => {
-    return hintLevel === 0 ? '❓' : '💡';
-  };
-  
-  return (
-    <button 
-      className={`hint-button ${hintLevel > 0 ? 'active' : ''}`} 
-      onClick={onClick}
-      title={hintLevel === 0 ? "Show hints" : hintLevel === 1 ? "Show more hints" : "Hide hints"}
-    >
-      <span className="hint-icon">{getHintIcon()}</span>
-      <span className="hint-label">{getHintLabel()}</span>
-      {hintLevel > 0 && <span className="hint-level">{hintLevel}</span>}
-    </button>
-  );
-};
-
 const DictationTool = ({ exerciseId = 1 }) => {
   // Find the selected exercise by ID or use the first one as default
   const defaultExercise = SAMPLE_EXERCISES.find(ex => ex.id === exerciseId) || SAMPLE_EXERCISES[0];
@@ -940,27 +688,11 @@ const DictationTool = ({ exerciseId = 1 }) => {
   const [dictationStartTime, setDictationStartTime] = useState(null);
   const [dictationResults, setDictationResults] = useState(null);
   
-  // Add hint level state
-  const [hintLevel, setHintLevel] = useState(0);
-  
-  // Add max hint level tracking for scoring
-  const [maxHintLevelUsed, setMaxHintLevelUsed] = useState(0);
-  
   const audioRef = useRef(null);
   const inputRef = useRef(null);
   const timeoutRef = useRef(null);
   const timerIntervalRef = useRef(null);
   const currentIndexRef = useRef(0); // Keep track of current index for closures
-  const [matcherReady, setMatcherReady] = useState(false);
-
-  // Initialize dictationMatcher on mount
-  useEffect(() => {
-    let isMounted = true;
-    initDictationMatcher().then(() => {
-      if (isMounted) setMatcherReady(true);
-    });
-    return () => { isMounted = false; };
-  }, []);
 
   // Update the ref whenever state changes
   useEffect(() => {
@@ -1362,7 +1094,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
     
     // Check current sentence
     const currentSentence = sentences[currentSentenceIndex];
-
+    
     // Clean up expected text (remove punctuation, normalize spaces)
     const normalizeForComparison = (text, preserveCase = false) => {
       // First normalize German umlaut alternatives
@@ -1370,7 +1102,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
       
       // Handle common umlaut alternative notations (before punctuation removal)
       normalized = normalized
-        // Handle o-umlaut variations
+        // Handle o-umlaut variations (prioritize this for "schoener" case)
         .replace(/oe/g, 'ö')
         .replace(/o\//g, 'ö')
         .replace(/o:/g, 'ö')
@@ -1403,131 +1135,15 @@ const DictationTool = ({ exerciseId = 1 }) => {
       
       return normalized;
     };
-
-    // Simple comparison with hint adjustment
-    const compareWithHintAdjustment = () => {
-      const expectedNormalized = normalizeForComparison(currentSentence.text, checkCapitalization);
-      const actualNormalized = normalizeForComparison(userInput, checkCapitalization);
-      
-      // If no hints are active, use advanced matcher alignment
-      if (hintLevel === 0) {
-        const expectedWords = expectedNormalized.split(/\s+/);
-        const actualWords = actualNormalized.split(/\s+/);
-        const alignment = alignWithMatcher(expectedWords, actualWords);
-        let allCorrect = true;
-        alignment.forEach(pair => {
-          if (pair.ref && pair.user) {
-            if (pair.op !== 'match') {
-              allCorrect = false;
-            }
-          } else if (pair.ref && !pair.user) {
-            // Missing word
-            allCorrect = false;
-          } else if (!pair.ref && pair.user) {
-            // Extra word
-            allCorrect = false;
-          }
-        });
-        return allCorrect;
-      }
-      // ... existing code ...
-      
-      // If no hints are active, do a direct comparison
-      if (hintLevel === 0) {
-        return expectedNormalized === actualNormalized;
-      }
-      
-      // Split into words
-      const expectedWords = expectedNormalized.split(/\s+/);
-      const actualWords = actualNormalized.split(/\s+/);
-      
-      // If word count doesn't match, do a direct comparison
-      if (expectedWords.length !== actualWords.length) {
-        return expectedNormalized === actualNormalized;
-      }
-      
-      // Compare each word with hint adjustment
-      for (let i = 0; i < expectedWords.length; i++) {
-        const expectedWord = expectedWords[i];
-        const actualWord = actualWords[i];
-        
-        // Direct match is always accepted
-        if (expectedWord === actualWord) {
-          continue;
-        }
-        
-        // Calculate visible hint letters based on hint level
-        let visibleLetterCount = 0;
-        if (hintLevel === 1) {
-          visibleLetterCount = 1; // First letter hint
-        } else if (hintLevel === 2) {
-          // For level 2: longer words (6+ chars) show 3 letters, others show 2
-          visibleLetterCount = expectedWord.length > 5 ? 3 : 2;
-        }
-        
-        // Empty input for this word - not correct
-        if (!actualWord || actualWord.length === 0) {
-          return false;
-        }
-        
-        // Partial input cases
-        
-        // CASE 1: User only typed the non-visible part
-        // Example: For "ist" with first letter hint showing "i",
-        // user only typed "st"
-        if (visibleLetterCount < expectedWord.length) {
-          const expectedSuffix = expectedWord.substring(visibleLetterCount);
-          // Check if actual exactly matches the expected suffix
-          if (expectedSuffix === actualWord) {
-            continue; // This word is correct
-          }
-        }
-        
-        // CASE 2: User typed full or partial word, including visible part
-        // Example: For "Montag" with first letter hint showing "M",
-        // user typed "Mon" (partial) or "Montag" (full)
-        
-        // Get the actual part the user typed beyond the visible hint
-        const actualSuffix = actualWord.substring(Math.min(visibleLetterCount, actualWord.length));
-        // Get the expected part beyond the visible hint
-        const expectedSuffix = expectedWord.substring(visibleLetterCount);
-        
-        // If user typed a correct prefix of the hidden part
-        if (expectedSuffix.startsWith(actualSuffix) && actualSuffix.length > 0) {
-          continue; // This word is correct as far as typed
-        }
-        
-        // CASE 3: User typed a suffix-only version (common in compound words)
-        // Example: For "Montagmorgen" with first letter hint showing "M", 
-        // user typed "ontagmorgen" or "tagmorgen"
-        
-        // Check if user typed part of word after first letter
-        if (visibleLetterCount === 1 && 
-            expectedWord.length > actualWord.length && 
-            actualWord.length >= 3) {
-          
-          const expectedTail = expectedWord.substring(1);
-          
-          // Check if actual is the tail part of expected word
-          if (expectedTail === actualWord || 
-              expectedTail.startsWith(actualWord) ||
-              expectedTail.includes(actualWord)) {
-            continue; // This is a valid partial match
-          }
-        }
-        
-        // Word didn't match any of the accepted patterns
-        return false;
-      }
-      
-      // All words matched with hint adjustment
-      return true;
-    };
     
-    // Process input with hint adjustment
-    const isCorrect = compareWithHintAdjustment();
+    // If capitalization is enabled, preserve case for comparison
+    const expected = normalizeForComparison(currentSentence.text, checkCapitalization);
+    const actual = normalizeForComparison(userInput, checkCapitalization);
     
-    // Save the result
+    // Simple comparison for now - with capitalization settings applied
+    const isCorrect = expected === actual;
+    
+    // Save result
     const newResults = [...sentenceResults];
     newResults[currentSentenceIndex] = {
       expected: currentSentence.text,
@@ -1537,12 +1153,11 @@ const DictationTool = ({ exerciseId = 1 }) => {
     setSentenceResults(newResults);
     
     debug('PROCESS_INPUT', {
-      expectedNormalized: normalizeForComparison(currentSentence.text, checkCapitalization),
-      actualNormalized: normalizeForComparison(userInput, checkCapitalization),
+      expected,
+      actual,
       isCorrect,
       resultsLength: newResults.filter(Boolean).length,
-      checkingCapitalization: checkCapitalization,
-      hintLevel
+      checkingCapitalization: checkCapitalization
     });
     
     return isCorrect;
@@ -1781,8 +1396,6 @@ const DictationTool = ({ exerciseId = 1 }) => {
     setEnterKeyPressCount(0);
     setWaitingForInput(false);
     setShowFeedback(false);
-    setHintLevel(0);
-    setMaxHintLevelUsed(0); // Reset hint level tracking
   };
 
   // Toggle shortcuts panel visibility
@@ -1861,88 +1474,15 @@ const DictationTool = ({ exerciseId = 1 }) => {
     const userWords = allSentenceResults
       .filter(Boolean)
       .flatMap(result => result.actual.split(/\s+/).filter(Boolean));
-    
-    // Smart alignment with hint-aware scoring
+    // Smart alignment (pass checkCapitalization)
     const alignment = alignWords(referenceWords, userWords, checkCapitalization);
     let correct = 0, mistakes = 0, insertions = 0, deletions = 0, substitutions = 0;
-    
-    // Adjust scoring based on hint level
     alignment.forEach(pair => {
-      if (pair.op === 'match') {
-        correct++;
-      } 
-      else if (pair.op === 'sub') { 
-        // Check if this should be counted as correct with hint system
-        if (maxHintLevelUsed > 0 && pair.user && pair.ref) {
-          const refWord = pair.ref;
-          const userWord = pair.user;
-          
-          // With hint level 1, user sees first letter
-          // With hint level 2, user sees 2-3 letters based on word length
-          let visibleLetterCount = 0;
-          if (maxHintLevelUsed === 1) {
-            visibleLetterCount = 1;
-          } else if (maxHintLevelUsed === 2) {
-            // For level 2: longer words (6+ chars) show 3 letters, others show 2
-            visibleLetterCount = refWord.length > 5 ? 3 : 2;
-          }
-          
-          // If user typed part of the word not shown by hints
-          if (userWord.length > 0) {
-            // Check if what they typed contains the non-hinted part correctly
-            const userSuffix = userWord.substring(Math.min(userWord.length, visibleLetterCount));
-            const refSuffix = refWord.substring(visibleLetterCount);
-            
-            // If user typed most of the hidden part correctly, count it as correct
-            if (userSuffix.length > 0 && 
-                refSuffix.toLowerCase().startsWith(userSuffix.toLowerCase())) {
-              // Count as correct instead of substitution
-              correct++;
-              
-              // Remove from mistake count
-              substitutions--;
-              mistakes--;
-              
-              // Skip the rest of this iteration
-              return;
-            }
-          }
-        }
-        
-        // If not corrected by hint allowance, count as mistake
-        mistakes++; 
-        substitutions++;
-      }
-      else if (pair.op === 'ins') { 
-        mistakes++; 
-        insertions++;
-      }
-      else if (pair.op === 'del') { 
-        mistakes++; 
-        deletions++;
-      }
+      if (pair.op === 'match') correct++;
+      else if (pair.op === 'sub') { mistakes++; substitutions++; }
+      else if (pair.op === 'ins') { mistakes++; insertions++; }
+      else if (pair.op === 'del') { mistakes++; deletions++; }
     });
-    
-    // Calculate words per minute
-    const elapsedMinutes = dictationTime / 60;
-    const wordsPerMinute = elapsedMinutes > 0 ? Math.round((userWords.length / elapsedMinutes) * 10) / 10 : 0;
-    
-    // Calculate accuracy percentage
-    const totalAttemptedWords = correct + substitutions + insertions;
-    const accuracyPercentage = totalAttemptedWords > 0 ? (correct / totalAttemptedWords) * 100 : 0;
-    
-    // Calculate score based on Option 2 formula
-    // score = (accuracy percentage) * (wpm/10) * hint penalty multiplier
-    const hintPenaltyMultiplier = maxHintLevelUsed === 0 ? 1.0 : 
-                                  maxHintLevelUsed === 1 ? 0.8 : 0.6;
-    
-    // Calculate final score (0-100)
-    const speedFactor = Math.min(2.5, wordsPerMinute / 10); // Cap speed factor at 2.5 (25 WPM)
-    let score = (accuracyPercentage * speedFactor * hintPenaltyMultiplier);
-    
-    // Ensure score is between 0-100 and rounded to nearest integer
-    score = Math.max(0, Math.min(100, Math.round(score)));
-    
     const resultsObj = {
       totalSentences,
       completedSentences: allSentenceResults.filter(Boolean).length,
@@ -1953,13 +1493,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
       insertions,
       deletions,
       substitutions,
-      totalWordsInAllText: referenceWords.length,
-      maxHintLevelUsed,
-      hintPenaltyMultiplier,
-      wordsPerMinute,
-      accuracyPercentage,
-      score,
-      checkCapitalization
+      totalWordsInAllText: referenceWords.length
     };
     debug('SET_DICTATION_RESULTS', resultsObj);
     setDictationResults(resultsObj);
@@ -2001,324 +1535,8 @@ const DictationTool = ({ exerciseId = 1 }) => {
     }
   }, [showFeedbackScreen, dictationResults]);
   
-  // Toggle hint level (0 = off, 1 = first letter, 2 = partial word outlines)
-  const toggleHint = () => {
-    const newLevel = (hintLevel + 1) % 3; // Cycle through 0, 1, 2
-    setHintLevel(newLevel);
-    
-    // Track the highest hint level used for scoring
-    if (newLevel > maxHintLevelUsed) {
-      setMaxHintLevelUsed(newLevel);
-      debug('HINT_LEVEL', `New max hint level: ${newLevel}`);
-    }
-  };
-  
-  // Helper function to identify if user input conflicts with hint letters
-  const isConflictWithHint = (expectedWord, actualWord, hintLevel, visibleLetterCount) => {
-    if (hintLevel === 0 || actualWord.length === 0) return false;
-    
-    const lowerExpected = expectedWord.toLowerCase();
-    const lowerActual = actualWord.toLowerCase();
-    
-    // IMPROVED CASE 1: User's input includes the same letters as the hint
-    // This needs to be more robust to catch both exact case and case-insensitive matches
-    if (visibleLetterCount > 0) {
-      // If the user's input starts with ANY of the hint letters, consider it a conflict
-      for (let i = 0; i < Math.min(visibleLetterCount, lowerActual.length); i++) {
-        if (lowerActual[i] === lowerExpected[i]) {
-          return true;
-        }
-      }
-      
-      // Case 2: User typed the entire word or a very similar version
-      // If user input starts with the same first letter (case insensitive)
-      if (lowerActual.startsWith(lowerExpected.substring(0, 1))) {
-        return true;
-      }
-    }
-    
-    return false;
-  };
-  
-  // Interactive hint system that merges hints and user input in the same line
-  const getHintedFeedback = (expected, actual) => {
-    if (!expected) return null;
-    // Helper to detect punctuation
-    const isPunctuation = char => /[^\p{L}\p{N}\s]/gu.test(char);
-    // Split text into words
-    const expectedWords = expected.split(/\s+/).filter(Boolean);
-    const actualWords = actual.split(/\s+/).filter(Boolean);
-    // Use robust alignment
-    const alignment = alignWithMatcher(expectedWords, actualWords);
-    // Create hint elements array
-    const hintElements = [];
-    
-    alignment.forEach((pair, wordIndex) => {
-      const expectedWord = pair.ref;
-      const actualWord = pair.user;
-      
-      // Create elements for this word
-      const wordElements = [];
-      
-      // Calculate visible hint letters based on hint level
-      let visibleLetterCount = 0;
-      if (hintLevel === 1 && expectedWord) {
-        visibleLetterCount = 1; // First letter hint
-      } else if (hintLevel === 2 && expectedWord) {
-        // For level 2: longer words (6+ chars) show 3 letters, others show 2
-        visibleLetterCount = expectedWord.length > 5 ? 3 : 2;
-      }
-      
-      // 1. Add visible hint letters (only for hint levels 1 and 2)
-      if (hintLevel > 0 && expectedWord) {
-        for (let i = 0; i < Math.min(visibleLetterCount, expectedWord.length); i++) {
-          wordElements.push(
-            <span key={`hint-${wordIndex}-${i}`} className="hint-visible">
-              {expectedWord.charAt(i)}
-            </span>
-          );
-        }
-      }
-      
-      // 2. Handle different alignment cases
-      
-      // Case: Missing word (expected word with no user input)
-      if (expectedWord && !actualWord) {
-        for (let i = hintLevel > 0 ? visibleLetterCount : 0; i < expectedWord.length; i++) {
-          const char = expectedWord.charAt(i);
-          wordElements.push(
-            <span key={`hint-${wordIndex}-${i}`} className="hint-placeholder">
-              {isPunctuation(char) ? char : '_'}
-            </span>
-          );
-        }
-      }
-      // Case: Extra word (user input with no corresponding expected word)
-      else if (!expectedWord && actualWord) {
-        for (let i = 0; i < actualWord.length; i++) {
-          wordElements.push(
-            <span key={`extra-${wordIndex}-${i}`} className="hint-extra">
-              {actualWord.charAt(i)}
-            </span>
-          );
-        }
-      }
-      // Case: User typed a word that matches expected (could be exact, typo, or compound)
-      else if (expectedWord && actualWord) {
-        // Check if words match exactly (ignoring case when capitalization check is off)
-        const isExactWordWithDifferentCase = !checkCapitalization && 
-                                           expectedWord.toLowerCase() === actualWord.toLowerCase();
-        
-        // Check if this is a consonant-skeleton match (missing vowels)
-        const isConsonantMatch = pair.matchType === 'consonant-match';
-        
-        // For exact match with different case, handle capitalization
-        if (isExactWordWithDifferentCase && hintLevel > 0) {
-          const userTypedPart = actualWord.substring(Math.min(visibleLetterCount, actualWord.length));
-          const expectedVisiblePart = expectedWord.substring(0, Math.min(visibleLetterCount, expectedWord.length));
-          const expectedHiddenPart = expectedWord.substring(visibleLetterCount);
-          
-          // Show the correct casing of the visible part (already added above in hint letters)
-          
-          // Show user input for the hidden part, auto-capitalizing if needed
-          for (let i = 0; i < userTypedPart.length; i++) {
-            const expectedPos = visibleLetterCount + i;
-            if (expectedPos >= expectedWord.length) continue;
-            
-            const expectedChar = expectedWord.charAt(expectedPos);
-            const actualChar = userTypedPart.charAt(i);
-            
-            // Determine if we should auto-capitalize
-            const shouldCapitalize = !checkCapitalization && 
-                                   expectedChar.toLowerCase() === actualChar.toLowerCase() &&
-                                   expectedChar !== actualChar;
-            
-            // Use expected char for capitalization correction, otherwise use actual
-            const displayChar = shouldCapitalize ? expectedChar : actualChar;
-            
-            wordElements.push(
-              <span 
-                key={`char-${wordIndex}-${i+visibleLetterCount}`} 
-                className="hint-correct"
-              >
-                {displayChar}
-              </span>
-            );
-          }
-        }
-        // Special handling for consonant skeleton matches (missing vowels)
-        else if (isConsonantMatch) {
-          // Get the non-hint part of the expected word
-          const startPos = hintLevel > 0 ? visibleLetterCount : 0;
-          
-          // Create an array to track which positions in the expected word have been matched
-          const matchedPositions = Array(expectedWord.length).fill(false);
-          
-          // Mark hint positions as matched
-          for (let i = 0; i < startPos; i++) {
-            matchedPositions[i] = true;
-          }
-          
-          // First pass: map consonants from user input to expected positions
-          const userConsonants = [];
-          const expectedConsonants = [];
-          
-          // Extract consonants with their original positions
-          for (let i = 0; i < actualWord.length; i++) {
-            const char = actualWord[i].toLowerCase();
-            if (!/[aeiouäöü]/i.test(char)) {
-              userConsonants.push({ char: actualWord[i], pos: i });
-            }
-          }
-          
-          for (let i = startPos; i < expectedWord.length; i++) {
-            const char = expectedWord[i].toLowerCase();
-            if (!/[aeiouäöü]/i.test(char)) {
-              expectedConsonants.push({ char: expectedWord[i], pos: i });
-            }
-          }
-          
-          // Map consonants from user to expected with position consideration
-          const mapping = [];
-          let userIdx = 0;
-          
-          for (let i = 0; i < expectedConsonants.length && userIdx < userConsonants.length; i++) {
-            const expectedChar = expectedConsonants[i].char.toLowerCase();
-            const userChar = userConsonants[userIdx].char.toLowerCase();
-            
-            if (expectedChar === userChar) {
-              mapping.push({
-                expectedPos: expectedConsonants[i].pos,
-                userChar: userConsonants[userIdx].char
-              });
-              matchedPositions[expectedConsonants[i].pos] = true;
-              userIdx++;
-            }
-          }
-          
-          // Sort mapping by expected position
-          mapping.sort((a, b) => a.expectedPos - b.expectedPos);
-          
-          // Generate final display with underscores for missing chars
-          for (let i = startPos; i < expectedWord.length; i++) {
-            const mapped = mapping.find(m => m.expectedPos === i);
-            
-            if (mapped) {
-              // Show matched consonant
-              const char = mapped.userChar;
-              const expectedChar = expectedWord[i];
-              const isMatch = !checkCapitalization ? 
-                            expectedChar.toLowerCase() === char.toLowerCase() : 
-                            expectedChar === char;
-              
-              wordElements.push(
-                <span 
-                  key={`char-${wordIndex}-${i}`} 
-                  className={isMatch ? "hint-correct" : "hint-incorrect"}
-                >
-                  {char}
-                </span>
-              );
-            } else {
-              // Show placeholder for missing char
-              const char = expectedWord[i];
-              wordElements.push(
-                <span key={`hint-${wordIndex}-${i}`} className="hint-placeholder">
-                  {isPunctuation(char) ? char : '_'}
-                </span>
-              );
-            }
-          }
-        }
-        // For compound matches or typos, use existing logic
-        else {
-          // Skip visible hint letters
-          const startPos = hintLevel > 0 ? visibleLetterCount : 0;
-          const userTypedPart = actualWord.substring(Math.min(startPos, actualWord.length));
-          
-          // Simple character-by-character comparison for the non-hint part
-          for (let i = 0; i < userTypedPart.length; i++) {
-            const expectedPos = startPos + i;
-            const actualChar = userTypedPart.charAt(i);
-            
-            // If beyond expected length, mark as extra
-            if (expectedPos >= expectedWord.length) {
-              wordElements.push(
-                <span 
-                  key={`char-${wordIndex}-${i+startPos}`} 
-                  className="hint-extra"
-                >
-                  {actualChar}
-                </span>
-              );
-              continue;
-            }
-            
-            const expectedChar = expectedWord.charAt(expectedPos);
-            
-            // Auto-capitalize if needed
-            const shouldCapitalize = !checkCapitalization && 
-                                   expectedChar.toLowerCase() === actualChar.toLowerCase() &&
-                                   expectedChar !== actualChar;
-            
-            const displayChar = shouldCapitalize ? expectedChar : actualChar;
-            
-            // Determine if characters match
-            const isMatching = !checkCapitalization ? 
-                             expectedChar.toLowerCase() === actualChar.toLowerCase() : 
-                             expectedChar === actualChar;
-            
-            wordElements.push(
-              <span 
-                key={`char-${wordIndex}-${i+startPos}`} 
-                className={isMatching ? "hint-correct" : "hint-incorrect"}
-              >
-                {displayChar}
-              </span>
-            );
-          }
-          
-          // Add placeholders for any remaining expected chars
-          for (let i = startPos + userTypedPart.length; i < expectedWord.length; i++) {
-            const char = expectedWord.charAt(i);
-            wordElements.push(
-              <span key={`hint-${wordIndex}-${i}`} className="hint-placeholder">
-                {isPunctuation(char) ? char : '_'}
-              </span>
-            );
-          }
-        }
-      }
-      
-      // Add the word to the hint elements
-      hintElements.push(
-        <span key={`word-${wordIndex}`} className="hint-word">
-          {wordElements}
-        </span>
-      );
-      
-      // Add space between words except for the last one
-      if (wordIndex < alignment.length - 1) {
-        hintElements.push(
-          <span key={`space-${wordIndex}`} className="hint-word-space"> </span>
-        );
-      }
-    });
-    
-    return (
-      <div className={`interactive-hint level-${hintLevel}`}>
-        {hintElements}
-      </div>
-    );
-  };
-  
   if (isLoading) {
     return <div className="loading">Loading exercise...</div>;
-  }
-
-  // Add loading state for matcher
-  if (!matcherReady) {
-    return <div className="loading">Lade Diktationsdaten...</div>;
   }
 
   // Show feedback screen if completed or canceled
@@ -2413,15 +1631,14 @@ const DictationTool = ({ exerciseId = 1 }) => {
         <div className="input-section">
           {exerciseStarted ? (
             <>
-              {/* Hint button */}
-              <div className="hint-controls">
-                <HintButton onClick={toggleHint} hintLevel={hintLevel} />
-              </div>
-              
-              {/* Feedback area with hints or real-time feedback based on hint level */}
+              {/* Real-time character feedback displayed above input */}
               {currentSentence && (
                 <div className="feedback-container real-time">
-                  {getHintedFeedback(currentSentence.text, userInput)}
+                  <CharacterFeedback 
+                    expected={currentSentence.text} 
+                    actual={userInput} 
+                    checkCapitalization={checkCapitalization}
+                  />
                 </div>
               )}
               
@@ -2451,7 +1668,6 @@ const DictationTool = ({ exerciseId = 1 }) => {
           )}
         </div>
       ) : null}
-      <button style={{position: 'fixed', bottom: 10, right: 10, zIndex: 1000}} onClick={() => { prepareResultsData(); setShowFeedbackScreen(true); }}>Show Results (Debug)</button>
     </div>
   );
 };

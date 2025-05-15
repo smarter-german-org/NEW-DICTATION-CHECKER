@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { debug } from '../utils/debug';
 import './AudioPlayer.css';
 
 const AudioPlayer = forwardRef(({ 
@@ -16,8 +15,7 @@ const AudioPlayer = forwardRef(({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [volume, setVolume] = useState(1);
-  const [speedIndex, setSpeedIndex] = useState(0);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
   
   // Track current sentence boundaries using refs
   const sentenceEndTimeRef = useRef(null);
@@ -26,9 +24,6 @@ const AudioPlayer = forwardRef(({
   
   const audioRef = useRef(null);
   const progressRef = useRef(null);
-  
-  // Define playback speed options (100%, 75%, 50%)
-  const speedOptions = [1, 0.75, 0.5];
   
   // Handle audio source change
   useEffect(() => {
@@ -50,9 +45,7 @@ const AudioPlayer = forwardRef(({
     play: () => {
       if (audioRef.current && isLoaded) {
         endEventProcessedRef.current = false;
-        audioRef.current.play().catch(error => {
-          debug('AUDIO_ERROR', 'Could not play audio:', error);
-        });
+        audioRef.current.play();
       }
     },
     pause: () => {
@@ -97,9 +90,7 @@ const AudioPlayer = forwardRef(({
         // Reset the processed flag
         endEventProcessedRef.current = false;
         // Play the current sentence again
-        audioRef.current.play().catch(error => {
-          debug('AUDIO_ERROR', 'Could not play audio:', error);
-        });
+        audioRef.current.play();
         return true;
       }
       return false;
@@ -119,9 +110,7 @@ const AudioPlayer = forwardRef(({
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play().catch(error => {
-        debug('AUDIO_ERROR', 'Could not play audio:', error);
-      });
+      audioRef.current.play();
     }
   };
   
@@ -160,9 +149,7 @@ const AudioPlayer = forwardRef(({
     } else {
       // Fallback if no ref handler
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(error => {
-        debug('AUDIO_ERROR', 'Could not play audio:', error);
-      });
+      audioRef.current.play();
     }
   };
   
@@ -239,53 +226,25 @@ const AudioPlayer = forwardRef(({
     if (onPlayStateChange) onPlayStateChange(playing);
   };
   
-  // Cycle through playback speeds
-  const cyclePlaybackSpeed = () => {
-    setSpeedIndex((prevIndex) => {
-      const newIndex = (prevIndex + 1) % speedOptions.length;
-      
-      if (audioRef.current) {
-        audioRef.current.playbackRate = speedOptions[newIndex];
-      }
-      
-      return newIndex;
-    });
-  };
-  
-  // Get current speed icon and title
-  const getSpeedIcon = () => {
-    return '🐢';
-  };
-  
-  const getSpeedTitle = () => {
-    const currentSpeed = speedOptions[speedIndex];
-    if (currentSpeed === 1) return 'Normal speed (click to slow down)';
-    if (currentSpeed === 0.75) return '75% speed (click to slow down more)';
-    return '50% speed (click to reset to normal)';
-  };
-  
-  // Apply the speed setting when it changes
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.playbackRate = speedOptions[speedIndex];
+  const togglePlaybackSpeed = () => {
+    let newSpeed;
+    if (playbackSpeed === 1.0) {
+      newSpeed = 0.75;
+    } else if (playbackSpeed === 0.75) {
+      newSpeed = 0.5;
+    } else {
+      newSpeed = 1.0;
     }
-  }, [speedIndex]);
-
-  // Determine the speed indicator label
-  const getSpeedLabel = () => {
-    const currentSpeed = speedOptions[speedIndex];
-    return currentSpeed === 1 ? '1×' : `${currentSpeed}×`;
+    
+    // Set the playback rate immediately with the new value
+    if (audioRef.current) {
+      audioRef.current.playbackRate = newSpeed;
+    }
+    
+    // Update the state to reflect the new speed
+    setPlaybackSpeed(newSpeed);
   };
   
-  // Handle volume change
-  const handleVolumeChange = (e) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume;
-    }
-  };
-
   return (
     <div className="audio-player">
       <audio
@@ -380,18 +339,13 @@ const AudioPlayer = forwardRef(({
               </svg>
             </button>
             
-            <button 
-              className={`option-toggle speed ${speedIndex > 0 ? 'active' : ''}`}
-              onClick={cyclePlaybackSpeed}
-              title={getSpeedTitle()}
-            >
-              <span className="speed-icon">{getSpeedIcon()}</span>
-              <span className="speed-label">{getSpeedLabel()}</span>
+            <button onClick={togglePlaybackSpeed} className="playback-speed-button">
+              {playbackSpeed === 1.0 ? '100%' : playbackSpeed === 0.75 ? '75%' : '50%'}
             </button>
             
             <button 
               className="cancel-button"
-              onClick={onCancel}
+              onClick={() => { console.log('[X BUTTON] Clicked'); if (typeof onCancel === 'function') { onCancel(); } }}
               title="Stop Dictation and Show Results"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -401,19 +355,6 @@ const AudioPlayer = forwardRef(({
             </button>
           </div>
         </div>
-      </div>
-      
-      <div className="volume-container">
-        <span className="volume-icon">🔊</span>
-        <input 
-          type="range" 
-          min="0" 
-          max="1" 
-          step="0.01" 
-          value={volume} 
-          onChange={handleVolumeChange} 
-          className="volume-slider"
-        />
       </div>
     </div>
   );
