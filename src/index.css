@@ -1,14 +1,24 @@
 :root {
-  --primary: #8B41A0;
-  --primary-light: #EE84EF;
-  --primary-dark: #6A2E7C;
-  --correct: #00c853;
-  --incorrect: #ff5252;
-  --gray-light: #f8f9fa;
-  --gray: #e8e8e8;
-  --gray-dark: #777;
-  --text: #333;
-  --white: #fff;
+  /* Dark theme colors */
+  --background-dark: #1a1a1a;
+  --background-darker: #151515;
+  --background-card: #212121;
+  --background-input: #1c1c1c;
+  --text-light: #e0e0e0;
+  --text-gray: #a0a0a0;
+  --primary: #FF5500;
+  --primary-light: rgba(255, 85, 0, 0.2);
+  --primary-dark: #E64A00;
+  --correct: #28a745;
+  --incorrect: #FF5252;
+  --gray-light: #2a2a2a;
+  --gray: #333333;
+  --gray-dark: #4a4a4a;
+  --text: #e0e0e0;
+  --white: #f0f0f0;
+  --black: #000000;
+  --orange: #FF5500;
+  --orange-hover: #FF6600;
 }
 
 * {
@@ -21,7 +31,33 @@ body {
   margin: 0;
   padding: 20px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  background-color: var(--gray-light);
+  background-color: var(--background-darker);
   min-height: 100vh;
-  color: var(--text);
+  color: var(--text-light);
+}
+
+/* Add smooth scrolling and better font rendering */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Style scrollbars for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-darker);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gray-dark);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
 } 
