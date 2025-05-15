@@ -23,9 +23,9 @@
 - ✅ Fixed compound word handling for special cases
 - ✅ Fixed duplicate letter bugs
 
-## Recent Changes
+## Recent Changes (May 2024)
 
-### UI Design Improvements (May 2024)
+### UI Design Improvements
 - ✅ Implemented dark theme with orange accents inspired by music player design
 - ✅ Extended dark mode styling to the entire application
 - ✅ Lightened dark mode backgrounds for better contrast and readability
@@ -34,15 +34,32 @@
 - ✅ Applied dark theme to results page with matching stat cards and text containers
 - ✅ Added custom scrollbars with orange highlight on hover for results page
 - ✅ Fixed text alignment to be consistently left-aligned
+- ✅ Created subtle gradient effects to the container frame for better visual distinction
 
-### Functionality Enhancements
-- ✅ Fixed capitalization checking for proper nouns and sentence-initial words
-- ✅ Added playback speed control with 3 states (100%, 75%, 50%)
-- ✅ Removed debug button to clean up interface 
+### Results Page Improvements
 - ✅ Improved results page with proper word coloring for correct/incorrect words
 - ✅ Added tooltips to incorrect words showing the correct version
 - ✅ Implemented strict exact word matching for statistics calculation
 - ✅ Made visual highlighting consistent with statistics (words must match 100% exactly to be correct)
+
+### Functionality Enhancements
+- ✅ Fixed capitalization checking for proper nouns and sentence-initial words
+- ✅ Enhanced capitalization checking for proper nouns like "Berlin"
+- ✅ Improved detection of sentence-initial words like "Es" requiring capitalization
+- ✅ Added playback speed control with 3 states (100%, 75%, 50%)
+- ✅ Removed debug button to clean up interface 
+
+### Text and Placeholder Fixes
+- ✅ Fixed issues with placeholder text not showing when starting the dictation tool
+- ✅ Preserved proper placeholder display throughout the exercise
+- ✅ Resolved duplication of placeholder text (showing twice in some states)
+- ✅ Improved focus handling to ensure placeholder visibility on exercise start
+
+### Technical Improvements
+- ✅ Implemented debouncing (100ms delay) for feedback rendering
+- ✅ Added memoization for expensive calculations like word alignment
+- ✅ Created caching system for word alignments to avoid redundant processing
+- ✅ Used useCallback for event handlers to prevent unnecessary re-renders
 
 ## Remaining Issues
 - ❌ Word alignment when switching hint modes sometimes places words at wrong positions
