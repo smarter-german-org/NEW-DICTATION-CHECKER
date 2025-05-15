@@ -102,6 +102,7 @@ body {
   flex-direction: column;
   justify-content: center;
   height: 56px;
+  text-align: left;
 }
 
 /* Ensure cursor blinks visibly */
@@ -126,6 +127,7 @@ body {
   line-height: 36px;
   font-family: sans-serif;
   vertical-align: middle;
+  text-align: left;
 }
 
 .dictation-input:focus {
@@ -179,7 +181,7 @@ body {
   border-radius: 4px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 @keyframes fadeIn {
@@ -204,6 +206,7 @@ body {
   height: 36px;
   color: var(--text-light);
   vertical-align: middle;
+  text-align: left;
 }
 
 /* Updated styles for word-based feedback */
