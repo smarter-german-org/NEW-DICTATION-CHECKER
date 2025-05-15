@@ -510,4 +510,174 @@ kbd {
   position: absolute;
   pointer-events: none;
   opacity: 0;
+}
+
+/* Hint Button & Controls */
+.hint-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+}
+
+.hint-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.hint-button:hover {
+  background-color: #e6f7ff;
+  border-color: #1890ff;
+  transform: translateY(-1px);
+}
+
+.hint-button.active {
+  background-color: #e6f7ff;
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.hint-icon {
+  font-size: 18px;
+  margin-right: 8px;
+}
+
+.hint-label {
+  margin-right: 4px;
+}
+
+.hint-level {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: #1890ff;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Interactive Hint System */
+.interactive-hint {
+  width: 100%;
+  margin: 10px 0;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid #eee;
+  font-family: monospace;
+  font-size: 1.2em;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  letter-spacing: 1px;
+}
+
+/* Add styling for level-0 to match other hint levels */
+.interactive-hint.level-0 {
+  /* Override any potential differences to match levels 1 and 2 */
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  font-family: monospace;
+  font-size: 1.2em;
+  line-height: 1.8;
+}
+
+/* Make sure the feedback container doesn't have competing styles in no-hint mode */
+.feedback-container.real-time .interactive-hint.level-0 {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  padding: 15px;
+  margin: 10px 0;
+}
+
+.interactive-hint .hint-word {
+  display: inline-block;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  padding: 0 2px;
+  margin: 0 2px;
+  border-radius: 3px;
+}
+
+/* Add visible word separation */
+.interactive-hint .hint-word-space {
+  display: inline-block;
+  width: 1.5em;
+  text-align: center;
+}
+
+.interactive-hint .hint-visible {
+  color: #1890ff;
+  font-weight: bold;
+  opacity: 0.7;
+  background-color: rgba(24, 144, 255, 0.1);
+  border-radius: 2px;
+  padding: 0 1px;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: #1890ff;
+  text-underline-offset: 3px;
+}
+
+.interactive-hint .hint-placeholder {
+  color: #999;
+  margin: 0 1px;
+}
+
+.interactive-hint .hint-correct {
+  color: #52c41a; /* Green */
+  font-weight: normal;
+}
+
+.interactive-hint .hint-incorrect {
+  color: #f5222d; /* Red */
+  text-decoration: underline wavy #f5222d;
+}
+
+.interactive-hint .hint-extra {
+  color: #f5222d; /* Red */
+  text-decoration: line-through;
+  opacity: 0.8;
+}
+
+.interactive-hint .hint-extra-word {
+  color: #f5222d; /* Red */
+  text-decoration: line-through;
+  margin: 0 5px;
+}
+
+/* Add new class for punctuation in hint system */
+.interactive-hint .hint-punctuation {
+  color: #888;
+  opacity: 0.7;
+  font-style: italic;
+  font-weight: normal;
+}
+
+/* Remove old combined feedback styles */
+.feedback-with-hints,
+.correction-feedback,
+.hint-overlay,
+.hint-level-1,
+.hint-level-2,
+.hint-sentence,
+.hint-space {
+  /* Reset to avoid conflicts */
 } 

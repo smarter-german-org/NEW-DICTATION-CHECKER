@@ -234,6 +234,7 @@ const DictationFeedback = ({
       let className = '';
       let tooltipId = `word-${sentenceIndex}-${idx}`;
       let tooltipContent = null;
+      
       if (pair.op === 'match') {
         className = 'word-correct';
       } else if (pair.op === 'sub') {
@@ -246,6 +247,7 @@ const DictationFeedback = ({
         className = 'word-placeholder';
         tooltipContent = pair.ref;
       }
+      
       return (
         <span
           key={idx}
@@ -288,6 +290,25 @@ const DictationFeedback = ({
   return (
     <div className="dictation-feedback">
       <h2>Dictation Results</h2>
+      
+      {/* Add Score Display at the top */}
+      {dictationResults.score !== undefined && (
+        <div className="score-display">
+          <div className="score-value">{dictationResults.score}</div>
+          <div className="score-label">Score</div>
+          
+          {/* Display hint penalty if hints were used */}
+          {dictationResults.maxHintLevelUsed > 0 && (
+            <div className="hint-penalty-info">
+              <span className="hint-icon">💡</span>
+              <span className="hint-text">
+                Hint penalty: {Math.round((1 - dictationResults.hintPenaltyMultiplier) * 100)}%
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+      
       <div className="feedback-stats">
         <div className="stat-item">
           <div className="stat-title">Completion</div>

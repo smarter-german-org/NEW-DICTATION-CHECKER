@@ -169,16 +169,39 @@ export function isPartOfCompoundWord(part, compound) {
   const lowerCompound = compound.toLowerCase();
   
   // Special case for key words that should be matched exactly
-  const exactMatchWords = ['fährt', 'fahrt', 'büro', 'buro', 'in', 'ihr', 'ist', 'der', 'die', 'das'];
+  const exactMatchWords = ['fährt', 'fahrt', 'büro', 'buro', 'in', 'ihr', 'ist', 'es', 'der', 'die', 'das'];
   if (exactMatchWords.includes(lowerPart) || exactMatchWords.includes(lowerCompound)) {
     return lowerPart === lowerCompound;
   }
   
+  // Enhanced compound word detection - handle cases like "tagmorgen" being part of "Montagmorgen"
+  
   // Check if it's a direct substring (anywhere in the compound word)
   if (lowerCompound.includes(lowerPart)) {
-    // Only consider it a match if the part is at least 2 characters
+    // Only consider it a match if the part is at least 3 characters
     // and makes up a substantial portion of the compound word
-    if (part.length >= 2 && part.length / compound.length >= 0.35) {
+    if (part.length >= 3 && part.length / compound.length >= 0.3) {
+      return true;
+    }
+  }
+  
+  // Special check for suffix matches (like "tagmorgen" in "Montagmorgen")
+  if (lowerCompound.endsWith(lowerPart) && part.length >= 4) {
+    return true;
+  }
+  
+  // Special check for prefix matches (like "Montag" in "Montagmorgen")
+  if (lowerCompound.startsWith(lowerPart) && part.length >= 3) {
+    return true;
+  }
+  
+  // Special case for different prefixes but same suffix (like "antagmorgen" vs "Montagmorgen")
+  if (lowerPart.length >= 6 && lowerCompound.length >= 6) {
+    // Check if they share the same suffix after removing first few characters
+    const partSuffix = lowerPart.substring(3);
+    const compoundSuffix = lowerCompound.substring(3);
+    
+    if (partSuffix === compoundSuffix && partSuffix.length >= 4) {
       return true;
     }
   }
