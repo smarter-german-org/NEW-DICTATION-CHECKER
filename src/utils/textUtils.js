@@ -117,6 +117,26 @@ export function levenshteinDistance(str1, str2) {
 }
 
 /**
+ * Strictly check if two words are exactly equal (for statistics)
+ * Only returns true if words match 100% exactly (with optional capitalization exemption)
+ * @param {string} word1 - First word
+ * @param {string} word2 - Second word  
+ * @param {boolean} checkCapitalization - Whether to check capitalization or not
+ * @returns {boolean} True only if words match exactly
+ */
+export function areExactlyEqual(word1, word2, checkCapitalization = false) {
+  if (!word1 || !word2) return false;
+  
+  // If capitalization matters (Aa toggle on), require exact match
+  if (checkCapitalization) {
+    return word1 === word2;
+  }
+  
+  // If capitalization doesn't matter (Aa toggle off), only compare lowercase
+  return word1.toLowerCase() === word2.toLowerCase();
+}
+
+/**
  * Check if two words are similar based on Levenshtein distance
  * @param {string} word1 - First word
  * @param {string} word2 - Second word

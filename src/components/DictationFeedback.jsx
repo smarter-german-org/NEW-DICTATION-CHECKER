@@ -4,7 +4,8 @@ import {
   alignWords, 
   normalizeGermanText, 
   levenshteinDistance,
-  areSimilarWords
+  areSimilarWords,
+  areExactlyEqual
 } from '../utils/textUtils';
 import { debug } from '../utils/debug';
 
@@ -77,45 +78,38 @@ const DictationFeedback = ({
     // Process the sentences that have been attempted
     sentenceResults.forEach((result, index) => {
       if (result) {
-        // Count words in the expected text for this sentence
-        const expectedWordCount = result.expected.split(/\s+/).filter(Boolean).length;
-        
         // Count words in the user's input
-        const actualWordCount = result.actual.split(/\s+/).filter(Boolean).length;
-        completedWords += actualWordCount;
+        const actualWords = result.actual.split(/\s+/).filter(Boolean);
+        const expectedWords = result.expected.split(/\s+/).filter(Boolean);
         
-        if (result.isCorrect) {
-          correctWords += actualWordCount;
-        } else {
-          // Extract the words for more flexible comparison
-          const expectedWords = result.expected.split(/\s+/).filter(Boolean);
-          const actualWords = result.actual.split(/\s+/).filter(Boolean);
-          
-          // Count correct words using more flexible matching
-          let tempCorrectWords = 0;
-          const matchedExpectedIndices = new Set();
-          
-          actualWords.forEach(actualWord => {
-            // Try to find a match among expected words
-            for (let i = 0; i < expectedWords.length; i++) {
-              if (matchedExpectedIndices.has(i)) continue; // Skip already matched words
-              
-              const expectedWord = expectedWords[i];
-              
-              // Check for exact match or similar word (using areSimilarWords for flexibility)
-              if (areSimilarWords(actualWord, expectedWord)) {
-                matchedExpectedIndices.add(i);
-                tempCorrectWords++;
-                break; // Found a match, move to next actual word
-              }
+        completedWords += actualWords.length;
+        
+        // When calculating stats, use STRICT matching for correct words
+        // This ensures words are only counted as correct if they match 100%
+        let tempCorrectWords = 0;
+        const matchedExpectedIndices = new Set();
+        
+        actualWords.forEach(actualWord => {
+          // Try to find a match among expected words
+          for (let i = 0; i < expectedWords.length; i++) {
+            if (matchedExpectedIndices.has(i)) continue; // Skip already matched words
+            
+            const expectedWord = expectedWords[i];
+            
+            // For statistics, use strict exact matching (100% match required)
+            // Only exception is capitalization when Aa toggle is off
+            if (areExactlyEqual(actualWord, expectedWord, dictationResults.checkCapitalization)) {
+              matchedExpectedIndices.add(i);
+              tempCorrectWords++;
+              break; // Found a match, move to next actual word
             }
-          });
-          
-          correctWords += tempCorrectWords;
-          
-          // Incorrect words are those entered incorrectly (not missing words)
-          incorrectWords += (actualWordCount - tempCorrectWords);
-        }
+          }
+        });
+        
+        correctWords += tempCorrectWords;
+        
+        // Incorrect words are those entered incorrectly (not missing words)
+        incorrectWords += (actualWords.length - tempCorrectWords);
       }
     });
 
