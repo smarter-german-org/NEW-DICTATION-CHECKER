@@ -221,8 +221,17 @@ const DictationFeedback = ({
       let tooltipId = `word-${sentenceIndex}-${idx}`;
       let content = null;
       let displayText = pair.user;
+      let isCorrect = false;
       
+      // Check if the words are similar using the more sophisticated matching
       if (pair.op === 'match') {
+        isCorrect = true;
+      } else if (pair.op === 'sub' && pair.ref && pair.user) {
+        // Double-check with areSimilarWords for more lenient matching
+        isCorrect = areSimilarWords(pair.ref, pair.user);
+      }
+      
+      if (isCorrect) {
         className = 'word-correct';
         // When Aa is off, we still want to show proper capitalization
         // So use the reference word (which has correct capitalization)
@@ -246,23 +255,15 @@ const DictationFeedback = ({
         displayText = '_____';
       }
       
-      // Only apply decoration styles to incorrect words
-      let style = {};
-      if (pair.op !== 'match') {
-        style = {
+      // Apply different styles based on whether the word is correct or not
+      const style = isCorrect ? 
+        { color: 'var(--text-light)', textDecoration: 'none', backgroundColor: 'transparent' } : 
+        {
+          color: 'var(--incorrect)',
           textDecoration: pair.op === 'sub' || pair.op === 'ins' ? 'line-through' : 'none',
           position: 'relative',
-          backgroundColor: 'rgba(255, 82, 82, 0.1)',
-          color: 'var(--incorrect)'
+          backgroundColor: 'rgba(255, 82, 82, 0.1)'
         };
-      } else {
-        // Explicitly set correct word styling
-        style = {
-          color: 'var(--text-light)',
-          textDecoration: 'none',
-          backgroundColor: 'transparent'
-        };
-      }
       
       return (
         <span
