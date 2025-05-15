@@ -246,10 +246,29 @@ const DictationFeedback = ({
         displayText = '_____';
       }
       
+      // Only apply decoration styles to incorrect words
+      let style = {};
+      if (pair.op !== 'match') {
+        style = {
+          textDecoration: pair.op === 'sub' || pair.op === 'ins' ? 'line-through' : 'none',
+          position: 'relative',
+          backgroundColor: 'rgba(255, 82, 82, 0.1)',
+          color: 'var(--incorrect)'
+        };
+      } else {
+        // Explicitly set correct word styling
+        style = {
+          color: 'var(--text-light)',
+          textDecoration: 'none',
+          backgroundColor: 'transparent'
+        };
+      }
+      
       return (
         <span
           key={idx}
           className={className}
+          style={style}
           onClick={content ? () => handleWordClick(tooltipId, content) : undefined}
           ref={el => wordRefs.current[tooltipId] = el}
         >
