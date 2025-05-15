@@ -1,9 +1,9 @@
 :root {
   /* Dark theme colors */
-  --background-dark: #1a1a1a;
-  --background-darker: #151515;
-  --background-card: #212121;
-  --background-input: #1c1c1c;
+  --background-dark: #222222;
+  --background-darker: #1d1d1d;
+  --background-card: #2a2a2a;
+  --background-input: #252525;
   --text-light: #e0e0e0;
   --text-gray: #a0a0a0;
   --primary: #FF5500;
@@ -11,9 +11,9 @@
   --primary-dark: #E64A00;
   --correct: #28a745;
   --incorrect: #FF5252;
-  --gray-light: #2a2a2a;
-  --gray: #333333;
-  --gray-dark: #4a4a4a;
+  --gray-light: #3a3a3a;
+  --gray: #444444;
+  --gray-dark: #555555;
   --text: #e0e0e0;
   --white: #f0f0f0;
   --black: #000000;
