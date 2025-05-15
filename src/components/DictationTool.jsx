@@ -69,9 +69,16 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
             if (normalizedCandidate === normalizedExpected) {
               score = 1;
             }
-            // Special case when case is different but spelling is similar (e.g., "balin" vs "Berlin")
+            // Special case when case is different but spelling is similar
+            // This handles proper nouns like "Berlin" and sentence-initial words like "Es"
             else if (normalizedCandidate.toLowerCase() === normalizedExpected.toLowerCase()) {
-              score = 0.95; // High score for same word with different case
+              // Check if expected word is capitalized (proper noun or sentence start)
+              if (expectedWord.charAt(0) === expectedWord.charAt(0).toUpperCase() && 
+                  candidateWord.charAt(0) !== candidateWord.charAt(0).toUpperCase()) {
+                score = 0.75; // Lower score for capitalization error
+              } else {
+                score = 0.95; // High score for same word with different case (not first letter)
+              }
             }
             // If no exact match but similar spelling, give higher score than usual
             else if (areSimilarWords(normalizedCandidate.toLowerCase(), normalizedExpected.toLowerCase())) {
@@ -270,8 +277,13 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
         // Only the case difference should be marked incorrect
         const isMatch = expectedChar === actualChar;
         
+        // Special highlighting for first letter capitalization errors (proper nouns, sentence starts)
+        const isFirstLetterCapError = i === 0 && 
+                                      expectedChar === expectedChar.toUpperCase() && 
+                                      actualChar === actualChar.toLowerCase();
+        
         chars.push({
-          type: isMatch ? 'char-correct' : 'char-incorrect',
+          type: isMatch ? 'char-correct' : (isFirstLetterCapError ? 'char-incorrect' : 'char-incorrect'),
           text: actualChar
         });
       }
