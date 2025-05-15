@@ -1,5 +1,11 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import './DictationFeedback.css';
+import { 
+  alignWords, 
+  normalizeGermanText, 
+  levenshteinDistance 
+} from '../utils/textUtils';
+import { debug } from '../utils/debug';
 
 const DictationFeedback = ({ 
   dictationResults, 
@@ -7,47 +13,10 @@ const DictationFeedback = ({
   totalTime = 0, 
   onRestart 
 }) => {
+  debug('RENDER_FEEDBACK', dictationResults, sentenceResults);
+
   // State for showing tooltips on word click
   const [activeTooltip, setActiveTooltip] = useState(null);
-  
-  // Add German umlaut normalization function
-  const normalizeGermanText = (text) => {
-    if (!text) return '';
-    
-    // TEST: Log a specific test case
-    if (text === 'schoener') {
-      console.log('FOUND schoener, will transform to schöner');
-    }
-    
-    console.log('BEFORE normalization:', text);
-    
-    // Simple direct replacement of common umlaut alternative notations
-    // Order matters - doing all replacements in one pass
-    let normalized = text
-      // Handle o-umlaut variations first (prioritize this for "schoener" case)
-      .replace(/oe/g, 'ö')
-      .replace(/o\//g, 'ö')
-      .replace(/o:/g, 'ö')
-      // Handle a-umlaut variations
-      .replace(/ae/g, 'ä')
-      .replace(/a\//g, 'ä')
-      .replace(/a:/g, 'ä')
-      // Handle u-umlaut variations
-      .replace(/ue/g, 'ü')
-      .replace(/u\//g, 'ü')
-      .replace(/u:/g, 'ü')
-      // Handle eszett/sharp s
-      .replace(/s\//g, 'ß');
-    
-    // Special case for common problematic words
-    if (text.toLowerCase() === 'schoener') normalized = 'schöner';
-    if (text.toLowerCase() === 'schoen') normalized = 'schön';
-    if (text.toLowerCase() === 'felle') normalized = 'fälle';
-    
-    console.log('AFTER normalization:', normalized);
-    
-    return normalized;
-  };
   
   // Check if a word potentially contains an umlaut or alternative notation
   const hasUmlautPattern = (word) => {
@@ -60,46 +29,6 @@ const DictationFeedback = ({
     if (/a\/|ae|a:|o\/|oe|o:|u\/|ue|u:|s\//.test(word)) return true;
     
     return false;
-  };
-  
-  // Add Levenshtein distance calculation for word similarity
-  const levenshteinDistance = (str1, str2) => {
-    const m = str1.length;
-    const n = str2.length;
-    
-    const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));
-    
-    for (let i = 0; i <= m; i++) dp[i][0] = i;
-    for (let j = 0; j <= n; j++) dp[0][j] = j;
-    
-    for (let i = 1; i <= m; i++) {
-      for (let j = 1; j <= n; j++) {
-        // Use modified cost for umlaut character pairs
-        let cost = 1;
-        
-        // Check if this is an umlaut pair (lower cost for e/ä, o/ö, u/ü)
-        if (
-          (str1[i - 1] === 'e' && str2[j - 1] === 'ä') || 
-          (str1[i - 1] === 'ä' && str2[j - 1] === 'e') || 
-          (str1[i - 1] === 'o' && str2[j - 1] === 'ö') || 
-          (str1[i - 1] === 'ö' && str2[j - 1] === 'o') || 
-          (str1[i - 1] === 'u' && str2[j - 1] === 'ü') || 
-          (str1[i - 1] === 'ü' && str2[j - 1] === 'u')
-        ) {
-          cost = 0.4; // Lower cost for umlaut pairs
-        } else if (str1[i - 1] === str2[j - 1]) {
-          cost = 0; // No cost for same characters
-        }
-        
-        dp[i][j] = Math.min(
-          dp[i - 1][j] + 1,     // deletion
-          dp[i][j - 1] + 1,     // insertion
-          dp[i - 1][j - 1] + cost  // substitution
-        );
-      }
-    }
-    
-    return dp[m][n];
   };
   
   // Calculate similarity as percentage (0-1)
@@ -130,18 +59,10 @@ const DictationFeedback = ({
   
   // Calculate statistics based on results
   const stats = useMemo(() => {
-    if (!dictationResults || !sentenceResults || sentenceResults.length === 0) {
-      return {
-        totalWords: 0,
-        completedWords: 0,
-        correctWords: 0,
-        incorrectWords: 0,
-        percentageCompleted: 0,
-        accuracyPercentage: 0,
-        totalSentences: 0,
-        completedSentences: 0
-      };
-    }
+    debug('CALC_STATS', {
+      hasDictationResults: !!dictationResults,
+      sentenceResultsLength: sentenceResults?.length
+    });
 
     const totalSentences = sentenceResults.length;
     const completedSentences = sentenceResults.filter(Boolean).length;
@@ -194,9 +115,6 @@ const DictationFeedback = ({
           
           // Missing words are calculated separately (no need to add to incorrectWords)
           const missingWordsCount = Math.max(0, expectedWordCount - matchedExpectedIndices.size);
-          
-          // We count missing words in the display but not in the incorrectWords total
-          // This prevents double-counting in the mistakes calculation
         }
       }
     });
@@ -205,7 +123,7 @@ const DictationFeedback = ({
     const percentageCompleted = totalWords > 0 ? (completedWords / totalWords) * 100 : 0;
     const accuracyPercentage = completedWords > 0 ? (correctWords / completedWords) * 100 : 0;
 
-    return {
+    const statsObj = {
       totalWords,
       completedWords,
       correctWords,
@@ -215,6 +133,9 @@ const DictationFeedback = ({
       totalSentences,
       completedSentences
     };
+    
+    debug('STATS_CALCULATED', statsObj);
+    return statsObj;
   }, [dictationResults, sentenceResults]);
 
   // Format time from seconds to mm:ss
@@ -270,17 +191,29 @@ const DictationFeedback = ({
         
         // Check if word is close to left edge (less than 60px from left)
         const isNearLeftEdge = rect.left - containerRect.left < 60;
-        
         // Check if word is close to right edge (less than 60px from right)
         const isNearRightEdge = containerRect.right - rect.right < 60;
+        // Check if word is close to top edge (less than 50px from top of viewport)
+        const isNearTopEdge = rect.top < 60;
         
-        // Set position based on proximity to edges
         let position = 'center';
         if (isNearLeftEdge) {
           position = 'left';
         } else if (isNearRightEdge) {
           position = 'right';
         }
+        // If not enough space above, show below
+        if (isNearTopEdge) {
+          position = 'below';
+        }
+        
+        debug('TOOLTIP_POSITION', { 
+          tooltipId: activeTooltip, 
+          position,
+          isNearLeftEdge,
+          isNearRightEdge,
+          isNearTopEdge
+        });
         
         setTooltipPositions({
           ...tooltipPositions,
@@ -289,257 +222,42 @@ const DictationFeedback = ({
       }
     }, [activeTooltip]);
     
-    console.log('PROCESSING userText:', userText);
-    
-    // CRITICAL: First normalize the complete userText for German umlauts, then split
-    const normalizedUserText = normalizeGermanText(userText);
-    
-    console.log('NORMALIZED complete text:', normalizedUserText);
-    
-    // Split both texts into words, preserving punctuation
-    const userWords = normalizedUserText.split(/\s+/).filter(Boolean);
+    // Split both texts into words
+    const userWords = userText.split(/\s+/).filter(Boolean);
     const expectedWords = expectedText.split(/\s+/).filter(Boolean);
     
-    console.log('SPLIT user words:', userWords);
-    console.log('EXPECTED words:', expectedWords);
+    // Use the same alignment as the stats calculation
+    const alignment = alignWords(expectedWords, userWords, dictationResults.checkCapitalization);
     
-    // Helper function to render tooltip with appropriate positioning
-    const renderTooltip = (tooltipId, content) => {
-      const position = tooltipPositions[tooltipId] || 'center';
+    // Render elements based on alignment
+    const renderElements = alignment.map((pair, idx) => {
+      let className = '';
+      let tooltipId = `word-${sentenceIndex}-${idx}`;
+      let tooltipContent = null;
+      if (pair.op === 'match') {
+        className = 'word-correct';
+      } else if (pair.op === 'sub') {
+        className = 'word-partial';
+        tooltipContent = pair.ref;
+      } else if (pair.op === 'ins') {
+        className = 'word-incorrect';
+        tooltipContent = 'Extra word';
+      } else if (pair.op === 'del') {
+        className = 'word-placeholder';
+        tooltipContent = pair.ref;
+      }
       return (
-        <span className={`word-tooltip ${position === 'left' ? 'word-tooltip-left' : position === 'right' ? 'word-tooltip-right' : ''}`}>
-          {content}
+        <span
+          key={idx}
+          className={className}
+          onClick={tooltipContent ? () => setActiveTooltip(tooltipId) : undefined}
+          onMouseLeave={tooltipContent ? () => setActiveTooltip(null) : undefined}
+          ref={el => wordRefs.current[tooltipId] = el}
+        >
+          {pair.user || (className === 'word-placeholder' ? '_____' : null)}
+          {activeTooltip === tooltipId && tooltipContent && renderTooltip(tooltipId, tooltipContent)}
         </span>
       );
-    };
-    
-    // This will hold the sequence of elements to render (correct words, incorrect words, placeholders)
-    const renderElements = [];
-    
-    // Create a mapping of user words to their positions in the expected text
-    const userWordPositions = [];
-    
-    // Track processed user words to avoid duplicates
-    const processedUserWordIndices = new Set();
-    
-    // First phase: match user words to expected words
-    for (let i = 0; i < userWords.length; i++) {
-      // Get the already normalized word and just clean punctuation
-      const cleanUserWord = userWords[i].toLowerCase().replace(/[^\w\säöüß]/g, '');
-      
-      console.log(`PROCESSING word[${i}]:`, userWords[i], '→ cleaned:', cleanUserWord);
-      
-      // Check each expected word for a match
-      let bestMatchIndex = -1;
-      let bestMatchScore = 0;
-      let isCompoundPart = false;
-      
-      for (let j = 0; j < expectedWords.length; j++) {
-        // Just clean the expected word, no normalization needed
-        const expectedWord = expectedWords[j].toLowerCase().replace(/[^\w\säöüß]/g, '');
-        
-        // Check for exact match
-        if (cleanUserWord === expectedWord) {
-          bestMatchIndex = j;
-          bestMatchScore = 1.0;
-          isCompoundPart = false;
-          break;
-        }
-        
-        // Check if user word is part of expected word (compound word)
-        if (cleanUserWord.length >= 2 && expectedWord.includes(cleanUserWord)) {
-          // The longer the match relative to the expected word, the better the score
-          const matchScore = cleanUserWord.length / expectedWord.length * 0.9; // Max 0.9 for compound parts
-          
-          if (matchScore > bestMatchScore) {
-            bestMatchIndex = j;
-            bestMatchScore = matchScore;
-            isCompoundPart = true;
-          }
-        }
-        
-        // Check if expected word is part of user word
-        if (expectedWord.length >= 2 && cleanUserWord.includes(expectedWord)) {
-          // The longer the match relative to the user word, the better the score
-          const matchScore = expectedWord.length / cleanUserWord.length * 0.8; // Max 0.8 for this case
-          
-          if (matchScore > bestMatchScore) {
-            bestMatchIndex = j;
-            bestMatchScore = matchScore;
-            isCompoundPart = false;
-          }
-        }
-      }
-      
-      // If no good match found, try using Levenshtein distance as fallback
-      if (bestMatchScore < 0.3) {
-        for (let j = 0; j < expectedWords.length; j++) {
-          const expectedWord = expectedWords[j].toLowerCase().replace(/[^\w\säöüß]/g, '');
-          
-          // Skip very short words for Levenshtein to avoid false positives, unless they have umlaut patterns
-          if (cleanUserWord.length <= 2 && !hasUmlautPattern(cleanUserWord)) continue;
-          if (expectedWord.length <= 2 && !hasUmlautPattern(expectedWord)) continue;
-          
-          const similarity = calculateSimilarity(cleanUserWord, expectedWord);
-          
-          // Use a sliding threshold based on word length and umlaut presence
-          let threshold = 0.7; // Default threshold
-          
-          // Lower threshold for words with potential umlauts
-          if (hasUmlautPattern(cleanUserWord) || hasUmlautPattern(expectedWord)) {
-            threshold = 0.5; // Much lower threshold for words with umlaut patterns
-          } else if (Math.max(cleanUserWord.length, expectedWord.length) <= 4) {
-            threshold = 0.75; // Higher threshold for short words without umlauts
-          } else if (Math.max(cleanUserWord.length, expectedWord.length) >= 8) {
-            threshold = 0.6; // Lower threshold for long words without umlauts
-          }
-          
-          if (similarity > threshold && similarity > bestMatchScore) {
-            bestMatchIndex = j;
-            bestMatchScore = similarity * 0.8; // Scale back slightly to prioritize exact/compound matches
-            isCompoundPart = false;
-          }
-        }
-      }
-      
-      // If we found a match, add it to the positions array
-      if (bestMatchIndex !== -1 && bestMatchScore > 0.3) {
-        userWordPositions.push({
-          word: userWords[i],
-          expectedPosition: bestMatchIndex,
-          isCorrect: bestMatchScore >= 0.9 && !isCompoundPart,
-          isCompoundPart: isCompoundPart,
-          score: bestMatchScore
-        });
-      } else {
-        // No match found, mark as incorrect with a special position
-        userWordPositions.push({
-          word: userWords[i],
-          expectedPosition: -1,
-          isCorrect: false,
-          isCompoundPart: false,
-          score: 0
-        });
-      }
-    }
-    
-    // Second phase: create the rendered elements in correct order
-    let nextExpectedWordIndex = 0;
-    
-    // Process expected words in order
-    for (let i = 0; i < expectedWords.length; i++) {
-      // Find the best matching user word for this expected position
-      const userWordMatch = userWordPositions.find(
-        wp => wp.expectedPosition === i && !processedUserWordIndices.has(userWordPositions.indexOf(wp))
-      );
-      
-      // If there's a gap (missing words before this position), add placeholders
-      while (nextExpectedWordIndex < i) {
-        const tooltipId = `missing-${sentenceIndex}-${nextExpectedWordIndex}`;
-        renderElements.push(
-          <span 
-            key={`missing-${nextExpectedWordIndex}`}
-            className="word-placeholder"
-            onClick={() => setActiveTooltip(tooltipId)}
-            onMouseLeave={() => setActiveTooltip(null)}
-            ref={el => wordRefs.current[tooltipId] = el}
-          >
-            _____
-            {activeTooltip === tooltipId && 
-              renderTooltip(tooltipId, expectedWords[nextExpectedWordIndex])}
-          </span>
-        );
-        nextExpectedWordIndex++;
-      }
-      
-      // If we found a user word match for this expected position
-      if (userWordMatch) {
-        // Mark the word as processed
-        processedUserWordIndices.add(userWordPositions.indexOf(userWordMatch));
-        
-        if (userWordMatch.isCorrect) {
-          // Exact match
-          renderElements.push(
-            <span 
-              key={`word-${i}`}
-              className="word correct"
-            >
-              {userWordMatch.word}
-            </span>
-          );
-        } else if (userWordMatch.isCompoundPart) {
-          // Part of a compound word
-          const tooltipId = `compound-${sentenceIndex}-${i}`;
-          renderElements.push(
-            <span 
-              key={`compound-${i}`}
-              className="word compound-part"
-              onClick={() => setActiveTooltip(tooltipId)}
-              onMouseLeave={() => setActiveTooltip(null)}
-              ref={el => wordRefs.current[tooltipId] = el}
-            >
-              {userWordMatch.word}
-              {activeTooltip === tooltipId && 
-                renderTooltip(tooltipId, expectedWords[i])}
-            </span>
-          );
-        } else {
-          // Incorrect word (wrong spelling or completely different)
-          const tooltipId = `incorrect-${sentenceIndex}-${i}`;
-          renderElements.push(
-            <span 
-              key={`incorrect-${i}`}
-              className="word incorrect"
-              onClick={() => setActiveTooltip(tooltipId)}
-              onMouseLeave={() => setActiveTooltip(null)}
-              ref={el => wordRefs.current[tooltipId] = el}
-            >
-              {userWordMatch.word}
-              {activeTooltip === tooltipId && 
-                renderTooltip(tooltipId, expectedWords[i])}
-            </span>
-          );
-        }
-        
-        nextExpectedWordIndex = i + 1;
-      } else {
-        // No user word for this expected position, add a placeholder
-        const tooltipId = `missing-${sentenceIndex}-${i}`;
-        renderElements.push(
-          <span 
-            key={`missing-${i}`}
-            className="word-placeholder"
-            onClick={() => setActiveTooltip(tooltipId)}
-            onMouseLeave={() => setActiveTooltip(null)}
-            ref={el => wordRefs.current[tooltipId] = el}
-          >
-            _____
-            {activeTooltip === tooltipId && 
-              renderTooltip(tooltipId, expectedWords[i])}
-          </span>
-        );
-        nextExpectedWordIndex = i + 1;
-      }
-    }
-    
-    // Add any remaining unmatched user words at the end (extras)
-    userWordPositions.forEach((wordPosition, index) => {
-      if (!processedUserWordIndices.has(index)) {
-        const tooltipId = `extra-${sentenceIndex}-${index}`;
-        renderElements.push(
-          <span 
-            key={`extra-${index}`}
-            className="word incorrect"
-            onClick={() => setActiveTooltip(tooltipId)}
-            onMouseLeave={() => setActiveTooltip(null)}
-            ref={el => wordRefs.current[tooltipId] = el}
-          >
-            {wordPosition.word}
-            {activeTooltip === tooltipId && 
-              renderTooltip(tooltipId, "Extra word")}
-          </span>
-        );
-      }
     });
     
     return (
@@ -554,10 +272,22 @@ const DictationFeedback = ({
     );
   };
 
+  // Add the missing renderTooltip function
+  const renderTooltip = (id, content) => {
+    const position = tooltipPositions[id] || 'center';
+    const tooltipClass = `word-tooltip ${position === 'left' ? 'word-tooltip-left' : 
+                                         position === 'right' ? 'word-tooltip-right' : 
+                                         position === 'below' ? 'word-tooltip-below' : ''}`;
+    return (
+      <div className={tooltipClass}>
+        {content}
+      </div>
+    );
+  };
+
   return (
     <div className="dictation-feedback">
       <h2>Dictation Results</h2>
-      
       <div className="feedback-stats">
         <div className="stat-item">
           <div className="stat-title">Completion</div>
@@ -566,7 +296,6 @@ const DictationFeedback = ({
             {stats.completedWords} / {stats.totalWords} words
           </div>
         </div>
-        
         <div className="stat-item">
           <div className="stat-title">Accuracy</div>
           <div className="stat-value">{Math.round(stats.accuracyPercentage)}%</div>
@@ -574,19 +303,17 @@ const DictationFeedback = ({
             {stats.correctWords} correct words
           </div>
         </div>
-        
         <div className="stat-item">
           <div className="stat-title">Mistakes</div>
           <div className="stat-value">
-            {stats.incorrectWords} / {stats.totalWords}
+            {stats.incorrectWords} / {stats.completedWords}
           </div>
           <div className="stat-detail">
-            ({stats.totalWords > 0 
-              ? Math.round((stats.incorrectWords / stats.totalWords) * 100) 
+            ({stats.completedWords > 0 
+              ? Math.round((stats.incorrectWords / stats.completedWords) * 100) 
               : 0}%)
           </div>
         </div>
-        
         <div className="stat-item">
           <div className="stat-title">Time</div>
           <div className="stat-value">{formatTime(totalTime)}</div>
@@ -597,9 +324,7 @@ const DictationFeedback = ({
           </div>
         </div>
       </div>
-      
       <SentenceByLineComparison />
-      
       <button 
         className="restart-button"
         onClick={onRestart}

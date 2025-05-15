@@ -104,6 +104,8 @@
   min-height: 200px;
   max-height: 400px;
   overflow-y: auto;
+  overflow-x: auto;
+  overflow: visible;
   line-height: 1.6;
   font-size: 1rem;
 }
@@ -146,15 +148,28 @@
   border-radius: 3px;
 }
 
-.word.correct {
+.word.correct, .word-correct {
   color: #28a745; /* Green */
 }
 
-.word.incorrect {
+.word.incorrect, .word-incorrect {
   color: #dc3545; /* Red */
   text-decoration: line-through;
   position: relative;
   background-color: rgba(255, 0, 0, 0.05);
+}
+
+.word.partial, .word-partial {
+  color: #f46f07; /* Orange */
+  text-decoration: underline dotted #f46f07;
+  cursor: help;
+  position: relative;
+}
+
+.word-extra {
+  color: #dc3545; /* Red */
+  font-style: italic;
+  position: relative;
 }
 
 .word.compound-part {
@@ -225,6 +240,26 @@
   left: auto;
   right: 15px;
   margin-left: 0;
+}
+
+.word-tooltip-below {
+  top: 100%;
+  bottom: auto;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  margin-bottom: 0;
+  margin-top: 5px;
+}
+
+.word-tooltip-below::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent #444 transparent;
 }
 
 .sentence-placeholder {

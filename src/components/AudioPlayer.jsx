@@ -86,14 +86,13 @@ const AudioPlayer = forwardRef(({
     },
     repeatSentence: () => {
       if (audioRef.current && isLoaded) {
-        if (onEnded) {
-          audioRef.current.pause();
-          endEventProcessedRef.current = false;
-          onEnded();
-          return true;
-        }
-        return false;
+        // Reset the processed flag
+        endEventProcessedRef.current = false;
+        // Play the current sentence again
+        audioRef.current.play();
+        return true;
       }
+      return false;
     }
   }));
   
@@ -143,14 +142,11 @@ const AudioPlayer = forwardRef(({
   const handleRepeatSentence = () => {
     if (!isLoaded) return;
     
-    // Instead of just resetting and playing,
-    // use the callback to let the parent handle repeating properly
-    if (onEnded) {
-      // Signal to the parent component to handle the repeat
-      audioRef.current.pause();
-      onEnded();
+    // Use the ref's repeatSentence method to properly handle repeating
+    if (ref && ref.current) {
+      ref.current.repeatSentence();
     } else {
-      // Fallback if no parent handler
+      // Fallback if no ref handler
       audioRef.current.currentTime = 0;
       audioRef.current.play();
     }
@@ -325,7 +321,7 @@ const AudioPlayer = forwardRef(({
             
             <button 
               className="cancel-button"
-              onClick={onCancel}
+              onClick={() => { console.log('[X BUTTON] Clicked'); if (typeof onCancel === 'function') { onCancel(); } }}
               title="Stop Dictation and Show Results"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

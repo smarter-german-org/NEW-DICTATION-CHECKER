@@ -2,6 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import AudioPlayer from './AudioPlayer';
 import ConfirmDialog from './ConfirmDialog';
 import DictationFeedback from './DictationFeedback';
+import { 
+  alignWords,
+  normalizeText,
+  removePunctuation,
+  isPunctuation,
+  levenshteinDistance,
+  areSimilarWords,
+  isPartOfCompoundWord
+} from '../utils/textUtils';
+import { debug } from '../utils/debug';
 import './DictationTool.css';
 
 // Character-level feedback component with improved word skipping
@@ -11,143 +21,6 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
   
   // Initialize with empty string for new behavior
   if (!actual) actual = '';
-  
-  // Normalize the strings by removing punctuation, multiple spaces, etc.
-  const normalizeText = (text, preserveCase = false) => {
-    // First handle German umlaut alternatives
-    let normalized = text;
-    
-    // Handle common umlaut alternative notations (before case handling)
-    normalized = normalized
-      // Handle o-umlaut variations first (prioritize this for "schoener" case)
-      .replace(/oe/g, 'ö')
-      .replace(/o\//g, 'ö')
-      .replace(/o:/g, 'ö')
-      // Handle a-umlaut variations
-      .replace(/ae/g, 'ä')
-      .replace(/a\//g, 'ä')
-      .replace(/a:/g, 'ä')
-      // Handle u-umlaut variations
-      .replace(/ue/g, 'ü')
-      .replace(/u\//g, 'ü')
-      .replace(/u:/g, 'ü')
-      // Handle eszett/sharp s
-      .replace(/s\//g, 'ß');
-    
-    // Special case for common problematic words
-    if (normalized.toLowerCase() === 'schoener') normalized = 'schöner';
-    if (normalized.toLowerCase() === 'schoen') normalized = 'schön';
-    if (normalized.toLowerCase() === 'felle') normalized = 'fälle';
-    
-    // Then handle the case
-    normalized = preserveCase ? normalized : normalized.toLowerCase();
-    
-    // Remove punctuation but preserve umlauts and special characters
-    // This only removes actual punctuation, not letters like ä, ö, ü, ß
-    normalized = normalized.replace(/[^\p{L}\p{N}\s]/gu, '');
-    
-    // Replace multiple spaces with single space and trim
-    normalized = normalized.replace(/\s+/g, ' ').trim();
-    
-    return normalized;
-  };
-  
-  // Function to remove punctuation from text while preserving umlauts
-  const removePunctuation = (text) => {
-    return text.replace(/[^\p{L}\p{N}\s]/gu, '');
-  };
-  
-  // Custom function to identify punctuation characters
-  const isPunctuation = (char) => {
-    return /[^\p{L}\p{N}\s]/gu.test(char);
-  };
-  
-  // Calculate Levenshtein distance between two strings
-  const levenshteinDistance = (str1, str2) => {
-    const m = str1.length;
-    const n = str2.length;
-    
-    // Create a matrix of size (m+1) x (n+1)
-    const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));
-    
-    // Initialize the first row and column
-    for (let i = 0; i <= m; i++) dp[i][0] = i;
-    for (let j = 0; j <= n; j++) dp[0][j] = j;
-    
-    // Fill the matrix
-    for (let i = 1; i <= m; i++) {
-      for (let j = 1; j <= n; j++) {
-        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
-        dp[i][j] = Math.min(
-          dp[i - 1][j] + 1,     // deletion
-          dp[i][j - 1] + 1,     // insertion
-          dp[i - 1][j - 1] + cost  // substitution
-        );
-      }
-    }
-    
-    return dp[m][n];
-  };
-  
-  // Function to check if two words are similar enough based on Levenshtein distance
-  const areSimilarWords = (word1, word2) => {
-    if (!word1 || !word2) return false;
-    
-    // Exact match
-    if (word1 === word2) return true;
-    
-    const distance = levenshteinDistance(word1, word2);
-    const longerLength = Math.max(word1.length, word2.length);
-    
-    // Calculate similarity as a percentage
-    const similarity = 1 - distance / longerLength;
-    
-    // Determine threshold based on word length
-    // Shorter words need higher similarity to be considered a match
-    let threshold;
-    if (longerLength <= 3) {
-      threshold = 0.7; // Very short words
-    } else if (longerLength <= 5) {
-      threshold = 0.65; // Short words
-    } else if (longerLength <= 8) {
-      threshold = 0.6; // Medium words
-    } else {
-      threshold = 0.55; // Long words
-    }
-    
-    return similarity >= threshold;
-  };
-  
-  // New function to check if a word is part of another word (compound words)
-  const isPartOfCompoundWord = (part, compound) => {
-    if (!part || !compound) return false;
-    
-    // First, check if this is an exact match - always prioritize exact matches
-    if (part.toLowerCase() === compound.toLowerCase()) {
-      return true;
-    }
-    
-    // Case insensitive comparison for part detection
-    const lowerPart = part.toLowerCase();
-    const lowerCompound = compound.toLowerCase();
-    
-    // Special case for key words that should be matched exactly
-    const exactMatchWords = ['fährt', 'fahrt', 'büro', 'buro', 'in', 'ihr', 'ist', 'der', 'die', 'das'];
-    if (exactMatchWords.includes(lowerPart) || exactMatchWords.includes(lowerCompound)) {
-      return lowerPart === lowerCompound;
-    }
-    
-    // Check if it's a direct substring (anywhere in the compound word)
-    if (lowerCompound.includes(lowerPart)) {
-      // Only consider it a match if the part is at least 2 characters (reduced from 3)
-      // and makes up a substantial portion of the compound word
-      if (part.length >= 2 && part.length / compound.length >= 0.35) {
-        return true;
-      }
-    }
-    
-    return false;
-  };
   
   // Get normalized versions for processing
   const normalizedExpected = normalizeText(expected, checkCapitalization);
@@ -196,6 +69,16 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
             if (normalizedCandidate === normalizedExpected) {
               score = 1;
             }
+            // Special case when case is different but spelling is similar (e.g., "balin" vs "Berlin")
+            else if (normalizedCandidate.toLowerCase() === normalizedExpected.toLowerCase()) {
+              score = 0.95; // High score for same word with different case
+            }
+            // If no exact match but similar spelling, give higher score than usual
+            else if (areSimilarWords(normalizedCandidate.toLowerCase(), normalizedExpected.toLowerCase())) {
+              const dist = levenshteinDistance(normalizedCandidate.toLowerCase(), normalizedExpected.toLowerCase());
+              const longerLength = Math.max(normalizedCandidate.length, normalizedExpected.length);
+              score = 0.6 + 0.3 * (1 - dist / longerLength); // Higher base score in capitalization mode
+            }
           } else {
             // When not checking capitalization, compare lowercase versions
             // Both should already be normalized at this point
@@ -223,11 +106,11 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
               checkCapitalization ? expectedWord : normalizedExpectedWord,
               checkCapitalization ? candidateWord : normalizedCandidateWord
             );
-            const maxLen = Math.max(
+            const longerLength = Math.max(
               (checkCapitalization ? expectedWord : normalizedExpectedWord).length,
               (checkCapitalization ? candidateWord : normalizedCandidateWord).length
             );
-            score = 0.5 + 0.4 * (1 - dist / maxLen); // Score between 0.5 and 0.9 for similar words
+            score = 0.5 + 0.4 * (1 - dist / longerLength); // Score between 0.5 and 0.9 for similar words
           } 
           else if (score < 0.5) {
             // Less similar words - use character matching as fallback
@@ -263,8 +146,11 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
           // Apply a position penalty for words that are far away from their expected position
           // This helps maintain proper word order when words are skipped
           if (score > 0.4) {
-            // Small penalty for distance from expected position
-            const positionPenalty = j * 0.03; // 3% penalty per position away
+            // Reduced penalty when checking capitalization is enabled
+            // This helps words like "balin" match with "Berlin" even with capitalization check
+            const positionPenalty = checkCapitalization ? 
+              j * 0.01 : // Only 1% penalty per position when checkCapitalization is true
+              j * 0.03;  // Regular 3% penalty otherwise
             score = Math.max(0.4, score - positionPenalty);
           }
           
@@ -368,6 +254,11 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
   const compareChars = (expected, actual, checkCase) => {
     const chars = [];
     
+    if (!expected || !actual) {
+      debug('COMPARE_CHARS', 'Missing expected or actual text');
+      return chars;
+    }
+    
     // Special case for when capitalization is enabled but the words match case-insensitively
     // (e.g., "büro" vs "Büro") - we want to mark just the incorrectly cased characters
     if (checkCase && expected && actual && expected.toLowerCase() === actual.toLowerCase()) {
@@ -384,6 +275,7 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
           text: actualChar
         });
       }
+      debug('COMPARE_CHARS', 'Case mismatch only');
       return chars;
     }
     
@@ -660,16 +552,10 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
               </span>
             );
           case 'extra':
-            // Don't show extra words at the end of the expected text
-            // Check if this is at the end of the diff array, excluding spaces
-            const isAtEnd = index === diff.length - 1 || 
-              (index === diff.length - 3 && diff[diff.length - 1].type === 'space' && diff[diff.length - 2].type === 'extra');
-            
-            // Add a non-breaking space character before the extra word if it's not at the beginning
+            // Always show extra words
             const needsSpace = index > 0 && diff[index-1]?.type !== 'space';
-            
             return (
-              <span key={index} className={`word-extra ${isAtEnd ? 'word-extra-hidden' : ''}`}>
+              <span key={index} className="word-extra">
                 {needsSpace && ' '}{item.text}
               </span>
             );
@@ -815,12 +701,12 @@ const DictationTool = ({ exerciseId = 1 }) => {
 
   // Debug console logs for event tracking
   useEffect(() => {
-    console.log('[ENTER KEY PRESS COUNT]:', enterKeyPressCount);
+    debug('ENTER_KEY', enterKeyPressCount);
   }, [enterKeyPressCount]);
 
   // Debug navigation state
   useEffect(() => {
-    console.log('[NAVIGATION STATE]:', {
+    debug('NAVIGATION_STATE', {
       currentSentenceIndex,
       navigationInProgress,
       exerciseStarted,
@@ -1081,7 +967,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
 
   const submitInput = () => {
     // Call the handler directly instead of clicking a button
-    console.log('[DIRECT SUBMIT]', 'Directly calling handleNextSentence');
+    debug('DIRECT_SUBMIT', 'Directly calling handleNextSentence');
     handleNextSentence();
   };
 
@@ -1096,7 +982,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
     
     if (e.key === 'Enter' && !isModifierKeyPressed && !navigationInProgress && !isPlaying) {
       e.preventDefault(); // Prevent default Enter behavior that might trigger audio skip
-      console.log('[ENTER KEY PRESSED]', {
+      debug('ENTER_KEY_PRESSED', {
         currentSentenceIndex,
         userInput,
         navigationInProgress,
@@ -1131,7 +1017,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
     const currentSentence = sentences[indexToPlay];
     
     if (audioRef.current) {
-      console.log("Playing sentence at index:", indexToPlay, "starting at time:", currentSentence.startTime, "ending at:", currentSentence.endTime);
+      debug('PLAY_SENTENCE', "Playing sentence at index:", indexToPlay, "starting at time:", currentSentence.startTime, "ending at:", currentSentence.endTime);
       
       try {
         // Make sure audio is in stopped state first
@@ -1153,9 +1039,19 @@ const DictationTool = ({ exerciseId = 1 }) => {
     }
   };
 
+  // Add a new function to handle repeating the current sentence
+  const repeatCurrentSentence = () => {
+    if (audioRef.current && sentences.length > 0) {
+      const currentSentence = sentences[currentIndexRef.current];
+      if (currentSentence) {
+        playCurrentSentence(currentIndexRef.current);
+      }
+    }
+  };
+
   const handlePreviousSentence = () => {
     if (currentSentenceIndex > 0 && !navigationInProgress) {
-      console.log('[PREVIOUS SENTENCE]', 'Navigating to previous sentence');
+      debug('PREVIOUS_SENTENCE', 'Navigating to previous sentence');
       setNavigationInProgress(true);
       setWaitingForInput(false);
       // Don't hide feedback in real-time mode
@@ -1186,13 +1082,13 @@ const DictationTool = ({ exerciseId = 1 }) => {
         setUserInput('');
         playCurrentSentence(newIndex); // Pass the index explicitly
         setNavigationInProgress(false);
-        console.log('[PREVIOUS SENTENCE]', 'Navigation completed');
+        debug('PREVIOUS_SENTENCE', 'Navigation completed');
       }, 100);
     }
   };
 
   const processUserInput = () => {
-    console.log('[PROCESS INPUT]', 'Processing input for sentence', currentSentenceIndex);
+    debug('PROCESS_INPUT', 'Processing input for sentence', currentSentenceIndex);
     
     if (currentSentenceIndex >= sentences.length) return false;
     
@@ -1256,7 +1152,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
     };
     setSentenceResults(newResults);
     
-    console.log('[PROCESS INPUT]', {
+    debug('PROCESS_INPUT', {
       expected,
       actual,
       isCorrect,
@@ -1269,11 +1165,18 @@ const DictationTool = ({ exerciseId = 1 }) => {
 
   // Function to go to next sentence without requiring user input (for shortcuts)
   const goToNextSentence = (fromShortcut = false) => {
-    console.log('[NEXT SENTENCE SHORTCUT]', 'Attempting to go to next sentence');
+    debug('NEXT_SENTENCE_SHORTCUT', 'Attempting to go to next sentence');
     
     if (currentSentenceIndex >= sentences.length - 1 || navigationInProgress) {
-      console.log('[NEXT SENTENCE SHORTCUT]', 'Cannot navigate - invalid state');
-      return; // Already at the last sentence or navigation in progress
+      // If at the last sentence, process input and show feedback
+      if (userInput.trim() !== '') {
+        processUserInput();
+      }
+      prepareResultsData();
+      setShowFeedbackScreen(true);
+      setIsPlaying(false);
+      setCurrentSentenceIndex(sentences.length);
+      return;
     }
     
     setNavigationInProgress(true);
@@ -1311,7 +1214,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
   };
 
   const handleNextSentence = () => {
-    console.log('[NEXT SENTENCE]', 'Button clicked/Enter pressed, attempting to go to next sentence', {
+    debug('NEXT_SENTENCE', 'Button clicked/Enter pressed, attempting to go to next sentence', {
       userInput: userInput.trim(),
       navigationInProgress,
       currentSentenceIndex,
@@ -1325,7 +1228,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
     
     // Check if we can proceed
     if ((userInput.trim() === '' && !forceProcess) || navigationInProgress) {
-      console.log('[NEXT SENTENCE]', 'Blocked - empty input or navigation in progress', {
+      debug('NEXT_SENTENCE', 'Blocked - empty input or navigation in progress', {
         inputEmpty: userInput.trim() === '',
         navigationInProgress,
         forceProcess
@@ -1368,15 +1271,18 @@ const DictationTool = ({ exerciseId = 1 }) => {
         }, 100);
       } else {
         // End of exercise
-        console.log('[NEXT SENTENCE]', 'Exercise completed!');
+        console.log('[NEXT SENTENCE]', 'Exercise completed! (userInput branch)');
         setWaitingForInput(false);
+        prepareResultsData();
+        setShowFeedbackScreen(true);
+        setCurrentSentenceIndex(sentences.length);
       }
       return;
     }
     
     // Move to next sentence if not at the end
     if (currentSentenceIndex < sentences.length - 1) {
-      console.log('[NEXT SENTENCE]', 'Moving to next sentence');
+      console.log('[NEXT SENTENCE]', 'Moving to next sentence (no userInput)');
       setNavigationInProgress(true);
       setWaitingForInput(false);
       
@@ -1401,12 +1307,15 @@ const DictationTool = ({ exerciseId = 1 }) => {
         setUserInput('');
         playCurrentSentence(newIndex); // Pass the index explicitly
         setNavigationInProgress(false);
-        console.log('[NEXT SENTENCE]', 'Navigation completed');
+        console.log('[NEXT SENTENCE]', 'Navigation completed (no userInput)');
       }, 100);
     } else {
       // End of exercise
-      console.log('[NEXT SENTENCE]', 'Exercise completed!');
+      console.log('[NEXT SENTENCE]', 'Exercise completed! (no userInput branch)');
       setWaitingForInput(false);
+      prepareResultsData();
+      setShowFeedbackScreen(true);
+      setCurrentSentenceIndex(sentences.length);
     }
   };
 
@@ -1416,13 +1325,13 @@ const DictationTool = ({ exerciseId = 1 }) => {
     
     // If audio starts playing and exercise hasn't started yet, start the exercise
     if (isAudioPlaying && !exerciseStarted) {
-      console.log('[AUTO START]', 'Starting exercise from audio play');
+      debug('AUTO_START', 'Starting exercise from audio play');
       startExercise();
     }
     
     // When audio stops, focus the input field
     if (!isAudioPlaying && exerciseStarted) {
-      console.log('[AUDIO STOPPED]', 'Audio playback stopped, focusing input field');
+      debug('AUDIO_STOPPED', 'Audio playback stopped, focusing input field');
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
@@ -1434,7 +1343,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
   
   // Extract the startExercise logic into a separate function for reuse
   const startExercise = () => {
-    console.log('[START EXERCISE]', 'Starting exercise');
+    debug('START_EXERCISE', 'Starting exercise');
     
     if (sentences.length > 0) {
       setCurrentSentenceIndex(0);
@@ -1449,7 +1358,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
-          console.log('[START EXERCISE]', 'Initial focus set on input field');
+          debug('START_EXERCISE', 'Initial focus set on input field');
         }
       }, 100);
     }
@@ -1469,7 +1378,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
   };
 
   const handleRestart = () => {
-    console.log('[RESTART]', 'Restarting exercise');
+    debug('RESTART', 'Restarting exercise');
     
     // Clear any pending timeouts
     if (timeoutRef.current) {
@@ -1519,29 +1428,25 @@ const DictationTool = ({ exerciseId = 1 }) => {
   
   // Confirm cancel and show results
   const confirmCancelExercise = () => {
+    debug('CANCEL_EXERCISE', 'confirmCancelExercise called');
     setIsConfirmDialogOpen(false);
-    
     // Process current input if there is any
     if (userInput.trim() !== '') {
       processUserInput();
     }
-    
     // Stop any playback and clear timers
     if (audioRef.current) {
       audioRef.current.pause();
     }
-    
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
     }
-    
-    // Prepare results data and show feedback screen
+    // Always prepare results and show feedback screen
     prepareResultsData();
     setShowFeedbackScreen(true);
     setIsPlaying(false);
@@ -1554,46 +1459,44 @@ const DictationTool = ({ exerciseId = 1 }) => {
   
   // Prepare data for feedback screen
   const prepareResultsData = () => {
+    debug('PREPARE_RESULTS_DATA', 'called');
     // Calculate various statistics for the feedback
     const totalSentences = sentences.length;
-    
     // Get all sentences with their results, including empty results for skipped sentences
     const allSentenceResults = [...sentenceResults];
-    
     // Ensure we have entries for all sentences (even if user skipped some)
     while (allSentenceResults.length < sentences.length) {
       allSentenceResults.push(null);
     }
-    
-    // Record how many sentences the user actually completed
-    const completedSentences = allSentenceResults.filter(Boolean).length;
-    
     // Count total words in ALL sentences from the VTT file
-    const totalWordsInAllText = sentences.reduce((total, sentence) => {
-      return total + sentence.text.split(/\s+/).filter(Boolean).length;
-    }, 0);
-    
-    // Extract words for comparison
-    const allWords = sentences.flatMap(sentence => 
-      sentence.text.split(/\s+/).filter(Boolean).map(word => word.toLowerCase())
-    );
-    
-    const userWords = sentenceResults
+    const referenceWords = sentences
+      .flatMap(sentence => sentence.text.split(/\s+/).filter(Boolean));
+    const userWords = allSentenceResults
       .filter(Boolean)
-      .flatMap(result => 
-        result.actual.split(/\s+/).filter(Boolean).map(word => word.toLowerCase())
-      );
-    
-    const correctWords = userWords.filter(word => allWords.includes(word));
-    
-    setDictationResults({
-      totalSentences,
-      completedSentences,
-      allWords,
-      userWords,
-      correctWords,
-      totalWordsInAllText
+      .flatMap(result => result.actual.split(/\s+/).filter(Boolean));
+    // Smart alignment (pass checkCapitalization)
+    const alignment = alignWords(referenceWords, userWords, checkCapitalization);
+    let correct = 0, mistakes = 0, insertions = 0, deletions = 0, substitutions = 0;
+    alignment.forEach(pair => {
+      if (pair.op === 'match') correct++;
+      else if (pair.op === 'sub') { mistakes++; substitutions++; }
+      else if (pair.op === 'ins') { mistakes++; insertions++; }
+      else if (pair.op === 'del') { mistakes++; deletions++; }
     });
+    const resultsObj = {
+      totalSentences,
+      completedSentences: allSentenceResults.filter(Boolean).length,
+      referenceWords,
+      userWords,
+      correct,
+      mistakes,
+      insertions,
+      deletions,
+      substitutions,
+      totalWordsInAllText: referenceWords.length
+    };
+    debug('SET_DICTATION_RESULTS', resultsObj);
+    setDictationResults(resultsObj);
   };
   
   // Handle restart from feedback screen
@@ -1624,12 +1527,23 @@ const DictationTool = ({ exerciseId = 1 }) => {
   const currentSentence = sentences[currentSentenceIndex];
   const currentResult = sentenceResults[currentSentenceIndex];
   
+  // Ensure dictationResults is set when feedback screen is shown
+  useEffect(() => {
+    if (showFeedbackScreen && !dictationResults) {
+      debug('FORCE_PREPARE_RESULTS_DATA', 'useEffect triggered');
+      prepareResultsData();
+    }
+  }, [showFeedbackScreen, dictationResults]);
+  
   if (isLoading) {
     return <div className="loading">Loading exercise...</div>;
   }
 
   // Show feedback screen if completed or canceled
   if (showFeedbackScreen) {
+    if (!dictationResults) {
+      return <div className="loading">Loading results...</div>;
+    }
     return (
       <DictationFeedback 
         dictationResults={dictationResults}
@@ -1640,6 +1554,8 @@ const DictationTool = ({ exerciseId = 1 }) => {
     );
   }
 
+  // TEMP: Manual Show Results button for debugging
+  // Place this just before the return statement
   return (
     <div className="dictation-tool">
       <div className="audio-section">
@@ -1650,7 +1566,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
           checkCapitalization={checkCapitalization}
           onToggleCapitalization={() => setCheckCapitalization(prev => !prev)}
           onEnded={() => {
-            console.log("[AUDIO ENDED]", "Audio has reached the end of a sentence");
+            debug("AUDIO_ENDED", "Audio has reached the end of a sentence");
             setIsPlaying(false);
             if (inputRef.current) {
               setTimeout(() => {
@@ -1752,6 +1668,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
           )}
         </div>
       ) : null}
+      <button style={{position: 'fixed', bottom: 10, right: 10, zIndex: 1000}} onClick={() => { prepareResultsData(); setShowFeedbackScreen(true); }}>Show Results (Debug)</button>
     </div>
   );
 };
