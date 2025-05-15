@@ -25,7 +25,7 @@
 
 ## Recent Changes
 
-### UI Design Improvements
+### UI Design Improvements (May 2024)
 - ✅ Implemented dark theme with orange accents inspired by music player design
 - ✅ Extended dark mode styling to the entire application
 - ✅ Lightened dark mode backgrounds for better contrast and readability
@@ -33,11 +33,16 @@
 - ✅ Set consistent line-height and vertical positioning for better text display
 - ✅ Applied dark theme to results page with matching stat cards and text containers
 - ✅ Added custom scrollbars with orange highlight on hover for results page
+- ✅ Fixed text alignment to be consistently left-aligned
 
 ### Functionality Enhancements
 - ✅ Fixed capitalization checking for proper nouns and sentence-initial words
 - ✅ Added playback speed control with 3 states (100%, 75%, 50%)
 - ✅ Removed debug button to clean up interface 
+- ✅ Improved results page with proper word coloring for correct/incorrect words
+- ✅ Added tooltips to incorrect words showing the correct version
+- ✅ Implemented strict exact word matching for statistics calculation
+- ✅ Made visual highlighting consistent with statistics (words must match 100% exactly to be correct)
 
 ## Remaining Issues
 - ❌ Word alignment when switching hint modes sometimes places words at wrong positions
