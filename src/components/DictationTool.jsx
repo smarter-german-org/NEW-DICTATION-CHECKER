@@ -1668,7 +1668,6 @@ const DictationTool = ({ exerciseId = 1 }) => {
           )}
         </div>
       ) : null}
-      <button style={{position: 'fixed', bottom: 10, right: 10, zIndex: 1000}} onClick={() => { prepareResultsData(); setShowFeedbackScreen(true); }}>Show Results (Debug)</button>
     </div>
   );
 };

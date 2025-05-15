@@ -15,6 +15,7 @@ const AudioPlayer = forwardRef(({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
   
   // Track current sentence boundaries using refs
   const sentenceEndTimeRef = useRef(null);
@@ -225,6 +226,25 @@ const AudioPlayer = forwardRef(({
     if (onPlayStateChange) onPlayStateChange(playing);
   };
   
+  const togglePlaybackSpeed = () => {
+    let newSpeed;
+    if (playbackSpeed === 1.0) {
+      newSpeed = 0.75;
+    } else if (playbackSpeed === 0.75) {
+      newSpeed = 0.5;
+    } else {
+      newSpeed = 1.0;
+    }
+    
+    // Set the playback rate immediately with the new value
+    if (audioRef.current) {
+      audioRef.current.playbackRate = newSpeed;
+    }
+    
+    // Update the state to reflect the new speed
+    setPlaybackSpeed(newSpeed);
+  };
+  
   return (
     <div className="audio-player">
       <audio
@@ -317,6 +337,10 @@ const AudioPlayer = forwardRef(({
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
                 <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14" />
               </svg>
+            </button>
+            
+            <button onClick={togglePlaybackSpeed} className="playback-speed-button">
+              {playbackSpeed === 1.0 ? '100%' : playbackSpeed === 0.75 ? '75%' : '50%'}
             </button>
             
             <button 
