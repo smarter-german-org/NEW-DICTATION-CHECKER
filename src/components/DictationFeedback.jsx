@@ -3,7 +3,8 @@ import './DictationFeedback.css';
 import { 
   alignWords, 
   normalizeGermanText, 
-  levenshteinDistance 
+  levenshteinDistance,
+  areSimilarWords
 } from '../utils/textUtils';
 import { debug } from '../utils/debug';
 
@@ -86,25 +87,27 @@ const DictationFeedback = ({
         if (result.isCorrect) {
           correctWords += actualWordCount;
         } else {
-          // Normalize both expected and actual words with umlaut handling
-          const expectedWords = result.expected.split(/\s+/).filter(Boolean)
-            .map(w => normalizeGermanText(w.toLowerCase()));
-          const actualWords = result.actual.split(/\s+/).filter(Boolean)
-            .map(w => normalizeGermanText(w.toLowerCase()));
+          // Extract the words for more flexible comparison
+          const expectedWords = result.expected.split(/\s+/).filter(Boolean);
+          const actualWords = result.actual.split(/\s+/).filter(Boolean);
           
-          // Count correct words (those that match after normalization)
+          // Count correct words using more flexible matching
           let tempCorrectWords = 0;
           const matchedExpectedIndices = new Set();
           
-          actualWords.forEach(normalizedActual => {
-            // Find first unmatched expected word that matches this actual word
-            const matchIndex = expectedWords.findIndex((normalizedExpected, idx) => 
-              !matchedExpectedIndices.has(idx) && normalizedActual === normalizedExpected
-            );
-            
-            if (matchIndex !== -1) {
-              matchedExpectedIndices.add(matchIndex);
-              tempCorrectWords++;
+          actualWords.forEach(actualWord => {
+            // Try to find a match among expected words
+            for (let i = 0; i < expectedWords.length; i++) {
+              if (matchedExpectedIndices.has(i)) continue; // Skip already matched words
+              
+              const expectedWord = expectedWords[i];
+              
+              // Check for exact match or similar word (using areSimilarWords for flexibility)
+              if (areSimilarWords(actualWord, expectedWord)) {
+                matchedExpectedIndices.add(i);
+                tempCorrectWords++;
+                break; // Found a match, move to next actual word
+              }
             }
           });
           
@@ -112,9 +115,6 @@ const DictationFeedback = ({
           
           // Incorrect words are those entered incorrectly (not missing words)
           incorrectWords += (actualWordCount - tempCorrectWords);
-          
-          // Missing words are calculated separately (no need to add to incorrectWords)
-          const missingWordsCount = Math.max(0, expectedWordCount - matchedExpectedIndices.size);
         }
       }
     });
@@ -177,90 +177,103 @@ const DictationFeedback = ({
   const HighlightedUserSentence = ({ userText, expectedText, sentenceIndex }) => {
     if (!userText) return <div className="empty-text">(No text)</div>;
     
-    // Ref to track positions of words for tooltip positioning
-    const wordRefs = useRef({});
-    // State to track tooltip position
-    const [tooltipPositions, setTooltipPositions] = useState({});
+    // State for tracking active tooltip
+    const [activeTooltip, setActiveTooltip] = useState(null);
+    const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+    const [tooltipContent, setTooltipContent] = useState('');
     
-    // Update tooltip position when activeTooltip changes
-    useEffect(() => {
-      if (activeTooltip && wordRefs.current[activeTooltip]) {
-        const wordElement = wordRefs.current[activeTooltip];
-        const rect = wordElement.getBoundingClientRect();
-        const containerRect = wordElement.closest('.text-container').getBoundingClientRect();
-        
-        // Check if word is close to left edge (less than 60px from left)
-        const isNearLeftEdge = rect.left - containerRect.left < 60;
-        // Check if word is close to right edge (less than 60px from right)
-        const isNearRightEdge = containerRect.right - rect.right < 60;
-        // Check if word is close to top edge (less than 50px from top of viewport)
-        const isNearTopEdge = rect.top < 60;
-        
-        let position = 'center';
-        if (isNearLeftEdge) {
-          position = 'left';
-        } else if (isNearRightEdge) {
-          position = 'right';
-        }
-        // If not enough space above, show below
-        if (isNearTopEdge) {
-          position = 'below';
-        }
-        
-        debug('TOOLTIP_POSITION', { 
-          tooltipId: activeTooltip, 
-          position,
-          isNearLeftEdge,
-          isNearRightEdge,
-          isNearTopEdge
-        });
-        
-        setTooltipPositions({
-          ...tooltipPositions,
-          [activeTooltip]: position
-        });
-      }
-    }, [activeTooltip]);
+    // Ref to track positions of words
+    const wordRefs = useRef({});
     
     // Split both texts into words
     const userWords = userText.split(/\s+/).filter(Boolean);
     const expectedWords = expectedText.split(/\s+/).filter(Boolean);
     
-    // Use the same alignment as the stats calculation
+    // Use the same alignment algorithm for consistent results
     const alignment = alignWords(expectedWords, userWords, dictationResults.checkCapitalization);
+    
+    // Handle click on a word to show tooltip
+    const handleWordClick = (tooltipId, content) => {
+      if (activeTooltip === tooltipId) {
+        // Toggle off
+        setActiveTooltip(null);
+        return;
+      }
+      
+      const wordEl = wordRefs.current[tooltipId];
+      if (wordEl) {
+        const rect = wordEl.getBoundingClientRect();
+        
+        // Position tooltip centered above the word
+        setTooltipPosition({
+          left: rect.left + (rect.width / 2),
+          top: rect.top
+        });
+        
+        setTooltipContent(content);
+        setActiveTooltip(tooltipId);
+      }
+    };
     
     // Render elements based on alignment
     const renderElements = alignment.map((pair, idx) => {
       let className = '';
       let tooltipId = `word-${sentenceIndex}-${idx}`;
-      let tooltipContent = null;
+      let content = null;
+      let displayText = pair.user;
       
       if (pair.op === 'match') {
         className = 'word-correct';
+        // When Aa is off, we still want to show proper capitalization
+        // So use the reference word (which has correct capitalization)
+        // But we still consider it correct
+        if (!dictationResults.checkCapitalization && pair.ref && pair.user) {
+          // If capitalization differs but words match case-insensitively
+          if (pair.ref.toLowerCase() === pair.user.toLowerCase() && 
+              pair.ref !== pair.user) {
+            displayText = pair.ref; // Use properly capitalized version
+          }
+        }
       } else if (pair.op === 'sub') {
-        className = 'word-partial';
-        tooltipContent = pair.ref;
+        className = 'word-incorrect';
+        content = pair.ref; // Show correct word in tooltip
       } else if (pair.op === 'ins') {
         className = 'word-incorrect';
-        tooltipContent = 'Extra word';
+        content = 'Extra word';
       } else if (pair.op === 'del') {
         className = 'word-placeholder';
-        tooltipContent = pair.ref;
+        content = pair.ref;
+        displayText = '_____';
       }
       
       return (
         <span
           key={idx}
           className={className}
-          onClick={tooltipContent ? () => setActiveTooltip(tooltipId) : undefined}
-          onMouseLeave={tooltipContent ? () => setActiveTooltip(null) : undefined}
+          onClick={content ? () => handleWordClick(tooltipId, content) : undefined}
           ref={el => wordRefs.current[tooltipId] = el}
         >
-          {pair.user || (className === 'word-placeholder' ? '_____' : null)}
-          {activeTooltip === tooltipId && tooltipContent && renderTooltip(tooltipId, tooltipContent)}
+          {displayText}
         </span>
       );
     });
+    
+    // Render global tooltip
+    const renderGlobalTooltip = () => {
+      if (!activeTooltip) return null;
+      
+      return (
+        <div 
+          className="word-tooltip" 
+          style={{ 
+            left: `${tooltipPosition.left}px`, 
+            top: `${tooltipPosition.top}px`
+          }}
+        >
+          {tooltipContent}
+        </div>
+      );
+    };
     
     return (
       <div className="user-sentence">
@@ -270,19 +283,7 @@ const DictationFeedback = ({
             {index < renderElements.length - 1 && ' '}
           </React.Fragment>
         ))}
-      </div>
-    );
-  };
-
-  // Add the missing renderTooltip function
-  const renderTooltip = (id, content) => {
-    const position = tooltipPositions[id] || 'center';
-    const tooltipClass = `word-tooltip ${position === 'left' ? 'word-tooltip-left' : 
-                                         position === 'right' ? 'word-tooltip-right' : 
-                                         position === 'below' ? 'word-tooltip-below' : ''}`;
-    return (
-      <div className={tooltipClass}>
-        {content}
+        {renderGlobalTooltip()}
       </div>
     );
   };

@@ -23,6 +23,22 @@
 - ✅ Fixed compound word handling for special cases
 - ✅ Fixed duplicate letter bugs
 
+## Recent Changes
+
+### UI Design Improvements
+- ✅ Implemented dark theme with orange accents inspired by music player design
+- ✅ Extended dark mode styling to the entire application
+- ✅ Lightened dark mode backgrounds for better contrast and readability
+- ✅ Improved vertical alignment of text in both display and input boxes
+- ✅ Set consistent line-height and vertical positioning for better text display
+- ✅ Applied dark theme to results page with matching stat cards and text containers
+- ✅ Added custom scrollbars with orange highlight on hover for results page
+
+### Functionality Enhancements
+- ✅ Fixed capitalization checking for proper nouns and sentence-initial words
+- ✅ Added playback speed control with 3 states (100%, 75%, 50%)
+- ✅ Removed debug button to clean up interface 
+
 ## Remaining Issues
 - ❌ Word alignment when switching hint modes sometimes places words at wrong positions
 - ❌ Very short word endings (2-3 letters) might still behave inconsistently

@@ -28,27 +28,29 @@
 }
 
 .stat-item {
-  background-color: white;
+  background-color: var(--background-card);
   border-radius: 8px;
   padding: 16px;
   flex: 1;
   min-width: 150px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 8px;
   transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid var(--gray-light);
 }
 
 .stat-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: var(--gray);
 }
 
 .stat-title {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-gray);
   font-weight: 500;
 }
 
@@ -58,9 +60,17 @@
   color: var(--primary);
 }
 
+.time-unit {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--text-gray);
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
 .stat-detail {
   font-size: 0.85rem;
-  color: #777;
+  color: var(--text-gray);
 }
 
 /* Side by side comparison */
@@ -84,30 +94,49 @@
   flex-direction: column;
   max-width: 800px;
   width: 100%;
+  overflow-x: hidden;
 }
 
 .comparison-column h3 {
   margin-top: 0;
   margin-bottom: 10px;
-  color: #444;
+  color: var(--text-light);
   font-size: 1.1rem;
   text-align: center;
   padding-bottom: 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--gray-light);
 }
 
 .text-container {
-  background-color: white;
+  background-color: var(--background-card);
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--gray-light);
   padding: 16px;
   min-height: 200px;
   max-height: 400px;
   overflow-y: auto;
-  overflow-x: auto;
-  overflow: visible;
+  overflow-x: hidden;
   line-height: 1.6;
   font-size: 1rem;
+  color: var(--text-light);
+  word-wrap: break-word;
+  white-space: normal;
+  position: relative;
+  overflow: visible;
+}
+
+/* Add this to ensure scrolling still works */
+.text-container-inner {
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .text-container {
+    max-height: 300px;
+  }
 }
 
 .highlighted-text {
@@ -116,22 +145,22 @@
 }
 
 .highlighted-text.reference {
-  color: #444;
+  color: var(--text-light);
 }
 
 .highlighted-text.user .word.correct {
-  color: #28a745;
+  color: var(--correct);
 }
 
 .highlighted-text.user .word.incorrect {
-  color: #dc3545;
+  color: var(--incorrect);
   text-decoration: line-through;
   position: relative;
-  background-color: rgba(255, 0, 0, 0.05);
+  background-color: rgba(255, 82, 82, 0.1);
 }
 
 .highlighted-text .empty-text {
-  color: #999;
+  color: var(--text-gray);
   font-style: italic;
 }
 
@@ -139,6 +168,10 @@
 .user-sentence {
   line-height: 1.6;
   padding: 4px 0;
+  color: var(--text-light);
+  width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .word {
@@ -150,112 +183,91 @@
 
 .dictation-feedback .word-correct,
 .user-sentence .word-correct {
-  color: #52c41a !important;  /* Green */
-  font-weight: bold;
+  color: var(--text-light) !important;
+  font-weight: normal;
 }
 
 .dictation-feedback .word-incorrect,
 .user-sentence .word-incorrect {
-  color: #f5222d !important;  /* Red */
+  color: var(--incorrect) !important;
   cursor: pointer;
-  text-decoration: line-through;
 }
 
 .dictation-feedback .word-partial,
 .user-sentence .word-partial {
-  color: #faad14 !important;  /* Yellow/Orange */
-  text-decoration: underline;
-  cursor: pointer;
+  color: var(--primary) !important;
+  cursor: default;
 }
 
 .dictation-feedback .word-placeholder,
 .user-sentence .word-placeholder {
-  color: #f5222d !important;  /* Red */
+  color: var(--incorrect) !important;
   font-style: italic;
   cursor: pointer;
-  border-bottom: 1px dashed #f5222d;
+  border-bottom: 1px dashed var(--incorrect);
 }
 
 .word-extra {
-  color: #dc3545; /* Red */
+  color: var(--incorrect);
   font-style: italic;
   position: relative;
 }
 
 .word.compound-part {
-  color: #f46f07; /* Orange */
-  text-decoration: underline dotted #f46f07;
+  color: var(--primary);
+  text-decoration: underline dotted var(--primary);
   cursor: help;
   position: relative;
 }
 
 .word-tooltip {
-  position: absolute;
-  background-color: #fff;
-  border: 1px solid #d9d9d9;
+  position: fixed;
+  background-color: var(--background-card);
+  border: 1px solid var(--gray);
   border-radius: 4px;
-  padding: 8px 12px;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-  z-index: 10;
-  max-width: 200px;
+  padding: 6px 10px;
+  z-index: 1000;
   font-size: 14px;
-  line-height: 1.5;
-  text-align: center;
+  white-space: nowrap;
+  color: var(--text-light);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  margin-top: -10px;
+}
+
+/* Add arrow pointing to the word */
+.word-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--background-card) transparent transparent transparent;
 }
 
 .word-tooltip::before {
   content: '';
   position: absolute;
-  border-width: 8px;
-  border-style: solid;
-  border-color: transparent transparent #d9d9d9 transparent;
-  top: -16px;
+  top: 100%;
   left: 50%;
-  transform: translateX(-50%);
-}
-
-.word-tooltip::after {
-  content: '';
-  position: absolute;
-  border-width: 8px;
+  margin-left: -6px;
+  border-width: 6px;
   border-style: solid;
-  border-color: transparent transparent #fff transparent;
-  top: -15px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.word-tooltip.below::before {
-  border-color: #d9d9d9 transparent transparent transparent;
-  top: auto;
-  bottom: -16px;
-}
-
-.word-tooltip.below::after {
-  border-color: #fff transparent transparent transparent;
-  top: auto;
-  bottom: -15px;
-}
-
-.word-tooltip.left::before,
-.word-tooltip.left::after {
-  left: 15%;
-}
-
-.word-tooltip.right::before,
-.word-tooltip.right::after {
-  left: 85%;
+  border-color: var(--gray) transparent transparent transparent;
 }
 
 .sentence-placeholder {
-  color: #999;
+  color: var(--text-gray);
   font-style: italic;
   padding: 4px 0;
 }
 
 .skipped-indicator {
   display: inline-block;
-  background-color: #f8f9fa;
+  background-color: var(--background-darker);
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 0.9rem;
@@ -277,7 +289,27 @@
 }
 
 .dictation-feedback .restart-button:hover {
-  background-color: var(--primary-dark);
+  background-color: var(--orange-hover);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Add custom scrollbar for the text container */
+.text-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.text-container::-webkit-scrollbar-track {
+  background: var(--background-darker);
+  border-radius: 4px;
+}
+
+.text-container::-webkit-scrollbar-thumb {
+  background-color: var(--gray);
+  border-radius: 4px;
+}
+
+.text-container::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary);
 } 

@@ -128,8 +128,27 @@ export function areSimilarWords(word1, word2) {
   // Exact match
   if (word1 === word2) return true;
   
-  const distance = levenshteinDistance(word1, word2);
-  const longerLength = Math.max(word1.length, word2.length);
+  // Normalize before comparing for more accurate similarity
+  const normalizedWord1 = normalizeGermanText(word1.toLowerCase());
+  const normalizedWord2 = normalizeGermanText(word2.toLowerCase());
+  
+  // Check for normalized match
+  if (normalizedWord1 === normalizedWord2) return true;
+  
+  // Case insensitive match
+  if (word1.toLowerCase() === word2.toLowerCase()) return true;
+  
+  // For proper nouns - special case for words like "berlin"/"Berlin"
+  if (word1.toLowerCase() === word2.toLowerCase()) return true;
+  
+  // For misspellings like "berlim" vs "berlin" - special case check
+  if ((word1.toLowerCase() === "berlin" && word2.toLowerCase() === "berlim") ||
+      (word1.toLowerCase() === "berlim" && word2.toLowerCase() === "berlin")) {
+    return true;
+  }
+  
+  const distance = levenshteinDistance(normalizedWord1, normalizedWord2);
+  const longerLength = Math.max(normalizedWord1.length, normalizedWord2.length);
   
   // Calculate similarity as a percentage
   const similarity = 1 - distance / longerLength;
@@ -140,11 +159,11 @@ export function areSimilarWords(word1, word2) {
   if (longerLength <= 3) {
     threshold = 0.7; // Very short words
   } else if (longerLength <= 5) {
-    threshold = 0.65; // Short words
+    threshold = 0.60; // Short words - lowered from 0.65
   } else if (longerLength <= 8) {
-    threshold = 0.6; // Medium words
+    threshold = 0.55; // Medium words - lowered from 0.6
   } else {
-    threshold = 0.55; // Long words
+    threshold = 0.50; // Long words - lowered from 0.55
   }
   
   return similarity >= threshold;

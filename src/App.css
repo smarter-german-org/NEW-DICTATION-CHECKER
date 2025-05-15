@@ -2,7 +2,8 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 30px;
-  background-color: #2a2a2a;
+  background-color: #333333;
+  background-image: linear-gradient(to bottom, #3a3a3a, #303030);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   position: relative;
