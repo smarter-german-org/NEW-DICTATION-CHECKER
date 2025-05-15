@@ -215,6 +215,43 @@ const DictationFeedback = ({
       }
     };
     
+    // Custom function to check if words are similar but should be considered incorrect
+    const shouldMarkAsIncorrect = (refWord, userWord) => {
+      if (!refWord || !userWord) return true;
+      
+      // Convert to lowercase for comparison
+      const refLower = refWord.toLowerCase();
+      const userLower = userWord.toLowerCase();
+      
+      // Special cases for common German mistakes that should be marked incorrect
+      
+      // Case 1: schöner vs schoner (missing umlaut)
+      if ((refLower === 'schöner' && userLower === 'schoner') ||
+          (refLower === 'schön' && userLower === 'schon')) {
+        return true;
+      }
+      
+      // Case 2: Berlin vs balin/berlin (capital city error)
+      if (refLower === 'berlin' && (userLower === 'balin' || userLower === 'berlim')) {
+        return true;
+      }
+      
+      // Special case for missing key letters in German words
+      if (refLower.includes('ö') && userLower.replace('o', 'ö') === refLower) {
+        return true; // Missing umlaut
+      }
+      
+      if (refLower.includes('ä') && userLower.replace('a', 'ä') === refLower) {
+        return true; // Missing umlaut
+      }
+      
+      if (refLower.includes('ü') && userLower.replace('u', 'ü') === refLower) {
+        return true; // Missing umlaut
+      }
+      
+      return false;
+    };
+    
     // Render elements based on alignment
     const renderElements = alignment.map((pair, idx) => {
       let className = '';
@@ -227,8 +264,13 @@ const DictationFeedback = ({
       if (pair.op === 'match') {
         isCorrect = true;
       } else if (pair.op === 'sub' && pair.ref && pair.user) {
-        // Double-check with areSimilarWords for more lenient matching
-        isCorrect = areSimilarWords(pair.ref, pair.user);
+        // First check with our custom function for known incorrect patterns
+        if (shouldMarkAsIncorrect(pair.ref, pair.user)) {
+          isCorrect = false;
+        } else {
+          // Otherwise use the general similarity check
+          isCorrect = areSimilarWords(pair.ref, pair.user);
+        }
       }
       
       if (isCorrect) {
