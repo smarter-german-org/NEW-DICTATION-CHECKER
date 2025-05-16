@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import './DictationFeedback.css';
 import { 
   alignWords, 
@@ -8,6 +9,23 @@ import {
   areExactlyEqual
 } from '../utils/textUtils';
 import { debug } from '../utils/debug';
+
+// Tooltip component that will be rendered at the document level
+const Tooltip = ({ content, position, onClose }) => {
+  return ReactDOM.createPortal(
+    <div 
+      className="word-tooltip" 
+      style={{ 
+        left: `${position.left}px`, 
+        top: `${position.top}px`
+      }}
+      onClick={onClose}
+    >
+      {content}
+    </div>,
+    document.body
+  );
+};
 
 const DictationFeedback = ({ 
   dictationResults, 
@@ -19,6 +37,8 @@ const DictationFeedback = ({
 
   // State for showing tooltips on word click
   const [activeTooltip, setActiveTooltip] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const [tooltipContent, setTooltipContent] = useState('');
   
   // Check if a word potentially contains an umlaut or alternative notation
   const hasUmlautPattern = (word) => {
@@ -139,6 +159,21 @@ const DictationFeedback = ({
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  // Global click handler to close tooltip when clicking anywhere else
+  useEffect(() => {
+    const handleGlobalClick = (e) => {
+      // Close tooltip when clicking anywhere except tooltip elements
+      if (activeTooltip && 
+          !e.target.closest('.word-tooltip') && 
+          !e.target.closest('.word-incorrect')) {
+        setActiveTooltip(null);
+      }
+    };
+    
+    document.addEventListener('click', handleGlobalClick);
+    return () => document.removeEventListener('click', handleGlobalClick);
+  }, [activeTooltip]);
+  
   // Improved sentence-by-sentence comparison
   const SentenceByLineComparison = () => {
     return (
@@ -171,11 +206,6 @@ const DictationFeedback = ({
   const HighlightedUserSentence = ({ userText, expectedText, sentenceIndex }) => {
     if (!userText) return <div className="empty-text">(No text)</div>;
     
-    // State for tracking active tooltip
-    const [activeTooltip, setActiveTooltip] = useState(null);
-    const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
-    const [tooltipContent, setTooltipContent] = useState('');
-    
     // Ref to track positions of words
     const wordRefs = useRef({});
     
@@ -185,9 +215,58 @@ const DictationFeedback = ({
     
     // Use the same alignment algorithm for consistent results
     const alignment = alignWords(expectedWords, userWords, dictationResults.checkCapitalization);
+
+    // Helper function to find the best match for a word in the expected text
+    // This is ONLY used for tooltip content, not for alignment or statistics
+    const findBetterMatchForTooltip = (word) => {
+      if (!word) return null;
+      
+      let bestMatch = null;
+      let bestScore = 0;
+      
+      // First, check for exact matches (ignoring case)
+      for (const expectedWord of expectedWords) {
+        if (expectedWord.toLowerCase() === word.toLowerCase()) {
+          return expectedWord; // Return exact match immediately
+        }
+      }
+      
+      // Handle common typos with single character differences
+      for (const expectedWord of expectedWords) {
+        // If the lengths are similar (within 2 characters)
+        if (Math.abs(expectedWord.length - word.length) <= 2) {
+          // Calculate basic Levenshtein distance
+          const distance = levenshteinDistance(
+            expectedWord.toLowerCase(), 
+            word.toLowerCase()
+          );
+          
+          // For very short words (3 chars or less), allow only 1 difference
+          // For longer words, allow up to 2 differences
+          const maxAllowedDistance = expectedWord.length <= 3 ? 1 : 2;
+          
+          if (distance <= maxAllowedDistance) {
+            return expectedWord;
+          }
+        }
+      }
+      
+      // Then look for similar words with higher threshold
+      for (const expectedWord of expectedWords) {
+        // Calculate similarity score
+        const similarity = calculateSimilarity(word, expectedWord);
+        
+        if (similarity > bestScore && similarity > 0.6) { // Increased threshold for more accuracy
+          bestScore = similarity;
+          bestMatch = expectedWord;
+        }
+      }
+      
+      return bestMatch;
+    };
     
     // Handle click on a word to show tooltip
-    const handleWordClick = (tooltipId, content) => {
+    const handleWordClick = (tooltipId, word) => {
       if (activeTooltip === tooltipId) {
         // Toggle off
         setActiveTooltip(null);
@@ -198,13 +277,17 @@ const DictationFeedback = ({
       if (wordEl) {
         const rect = wordEl.getBoundingClientRect();
         
-        // Position tooltip centered above the word
+        // Position tooltip using fixed positioning relative to viewport
         setTooltipPosition({
           left: rect.left + (rect.width / 2),
-          top: rect.top
+          top: rect.top - 10
         });
         
-        setTooltipContent(content);
+        // For tooltip content, always look for the best match for this word
+        const betterMatch = findBetterMatchForTooltip(word);
+        const tooltipText = betterMatch || 'Extra word';
+        
+        setTooltipContent(tooltipText);
         setActiveTooltip(tooltipId);
       }
     };
@@ -213,7 +296,6 @@ const DictationFeedback = ({
     const renderElements = alignment.map((pair, idx) => {
       let className = '';
       let tooltipId = `word-${sentenceIndex}-${idx}`;
-      let content = null;
       let displayText = pair.user;
       let isCorrect = false;
       
@@ -240,14 +322,11 @@ const DictationFeedback = ({
         }
       } else if (pair.op === 'sub') {
         className = 'word-incorrect';
-        content = pair.ref; // Show correct word in tooltip
       } else if (pair.op === 'ins') {
         className = 'word-incorrect';
-        content = 'Extra word';
       } else if (pair.op === 'del') {
         className = 'word-placeholder';
-        content = pair.ref;
-        displayText = '_____';
+        displayText = '_'.repeat(pair.ref.length); // Dynamic placeholder based on word length
       }
       
       // Apply different styles based on whether the word is correct or not
@@ -265,7 +344,8 @@ const DictationFeedback = ({
           key={idx}
           className={className}
           style={style}
-          onClick={content ? () => handleWordClick(tooltipId, content) : undefined}
+          onClick={!isCorrect && displayText !== '_'.repeat(pair.ref?.length || 0) ? 
+            () => handleWordClick(tooltipId, displayText) : undefined}
           ref={el => wordRefs.current[tooltipId] = el}
         >
           {displayText}
@@ -273,32 +353,19 @@ const DictationFeedback = ({
       );
     });
     
-    // Render global tooltip
-    const renderGlobalTooltip = () => {
-      if (!activeTooltip) return null;
-      
-      return (
-        <div 
-          className="word-tooltip" 
-          style={{ 
-            left: `${tooltipPosition.left}px`, 
-            top: `${tooltipPosition.top}px`
-          }}
-        >
-          {tooltipContent}
-        </div>
-      );
-    };
-    
     return (
-      <div className="user-sentence">
-        {renderElements.map((element, index) => (
-          <React.Fragment key={index}>
-            {element}
-            {index < renderElements.length - 1 && ' '}
-          </React.Fragment>
-        ))}
-        {renderGlobalTooltip()}
+      <div className="user-sentence-wrapper">
+        <div className="user-sentence">
+          {renderElements.map((element, index) => (
+            <React.Fragment key={index}>
+              {element}
+            </React.Fragment>
+          ))}
+        </div>
+        <div className="expected-sentence-reference">
+          <span className="expected-label">Correct: </span>
+          {expectedText}
+        </div>
       </div>
     );
   };
@@ -362,6 +429,13 @@ const DictationFeedback = ({
         </div>
       </div>
       <SentenceByLineComparison />
+      {activeTooltip && (
+        <Tooltip 
+          content={tooltipContent}
+          position={tooltipPosition}
+          onClose={() => setActiveTooltip(null)}
+        />
+      )}
       <button 
         className="restart-button"
         onClick={onRestart}

@@ -113,16 +113,18 @@
   border: 1px solid var(--gray-light);
   padding: 16px;
   min-height: 200px;
-  max-height: 400px;
+  max-height: none;
   overflow-y: auto;
   overflow-x: hidden;
   line-height: 1.6;
   font-size: 1rem;
   color: var(--text-light);
   word-wrap: break-word;
+  word-break: break-word;
   white-space: normal;
   position: relative;
-  overflow: visible;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Add this to ensure scrolling still works */
@@ -149,7 +151,7 @@
 }
 
 .highlighted-text.user .word.correct {
-  color: var(--correct);
+  color: var(--text-light);
 }
 
 .highlighted-text.user .word.incorrect {
@@ -165,6 +167,13 @@
 }
 
 /* Word styles */
+.sentence-row {
+  margin-bottom: 15px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .user-sentence {
   line-height: 1.6;
   padding: 4px 0;
@@ -172,6 +181,14 @@
   width: 100%;
   overflow-wrap: break-word;
   word-break: break-word;
+  white-space: pre-wrap;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 32px;
+  margin-bottom: 12px; /* Add space between sentences */
+  height: auto; /* Allow height to grow with content */
+  overflow: visible; /* Ensure content isn't cut off */
 }
 
 .word {
@@ -185,12 +202,18 @@
 .user-sentence .word-correct {
   color: var(--text-light) !important;
   font-weight: normal;
+  text-decoration: none !important;
+  background-color: transparent !important;
 }
 
 .dictation-feedback .word-incorrect,
 .user-sentence .word-incorrect {
   color: var(--incorrect) !important;
   cursor: pointer;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .dictation-feedback .word-partial,
@@ -222,8 +245,8 @@
 
 .word-tooltip {
   position: fixed;
-  background-color: var(--background-card);
-  border: 1px solid var(--gray);
+  background-color: #252525;
+  border: 1px solid #444;
   border-radius: 4px;
   padding: 6px 10px;
   z-index: 1000;
@@ -231,7 +254,7 @@
   white-space: nowrap;
   color: var(--text-light);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-  pointer-events: none;
+  pointer-events: auto;
   transform: translate(-50%, -100%);
   margin-top: -10px;
 }
@@ -263,6 +286,11 @@
   color: var(--text-gray);
   font-style: italic;
   padding: 4px 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: 100%;
+  display: block;
 }
 
 .skipped-indicator {
@@ -271,6 +299,16 @@
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 0.9rem;
+}
+
+/* Styles for error line display */
+span.word-incorrect {
+  display: inline-block;
+  white-space: normal;
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  margin-bottom: 4px;
 }
 
 /* Restart button */
@@ -312,4 +350,41 @@
 
 .text-container::-webkit-scrollbar-thumb:hover {
   background-color: var(--primary);
+}
+
+.user-sentence-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 25px;
+  border-bottom: 1px solid var(--gray-light);
+  padding-bottom: 15px;
+}
+
+.expected-sentence-reference {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: var(--text-gray);
+  font-style: italic;
+}
+
+.expected-label {
+  color: var(--primary);
+  font-weight: 500;
+  font-style: normal;
+}
+
+/* Add for sentence placeholders */
+.sentence-placeholder {
+  color: var(--text-gray);
+  font-style: italic;
+  padding: 4px 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: 100%;
+  display: block;
+  margin-bottom: 25px;
+  border-bottom: 1px solid var(--gray-light);
+  padding-bottom: 15px;
 } 

@@ -559,8 +559,8 @@ const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) =>
           case 'missing':
             return (
               <span key={index} className="word-missing">
-                {/* Show underscores for missing words but without counting punctuation */}
-                {'_'.repeat(Math.max(3, removePunctuation(item.text).length))}
+                {/* Show underscores for missing words - match exact length */}
+                {'_'.repeat(removePunctuation(item.text).length)}
               </span>
             );
           case 'extra':
@@ -870,7 +870,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
             break;
           
           case 'ArrowUp':
-            // Command/Ctrl+Up: repeat current sentence
+            // Command/Ctrl+Up: repeat sentence
             e.preventDefault();
             if (exerciseStarted) {
               playCurrentSentence();
@@ -1634,7 +1634,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
             <div className="shortcut-keys">
               <kbd>{modifierKeySymbol}</kbd> + <kbd>↑</kbd>
             </div>
-            <div className="shortcut-description">: Repeat current sentence</div>
+            <div className="shortcut-description">: Repeat sentence</div>
           </div>
         </div>
       </div>
