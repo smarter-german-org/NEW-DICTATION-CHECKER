@@ -68,9 +68,29 @@
     width: 100%;
   }
 
+  /* Fix text input to properly handle multi-line text */
   .dictation-tool .dictation-input {
-    min-height: 80px;
+    min-height: 100px !important; /* Increased height for multi-line text */
+    height: auto !important;
     font-size: 16px; /* Prevents iOS zoom on input focus */
+    line-height: 1.5 !important;
+    padding: 10px !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  /* Fix text display in feedback container */
+  .feedback-container {
+    min-height: 60px !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  
+  .character-feedback {
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+    white-space: pre-wrap !important;
   }
 
   /* Feedback page mobile styles */
@@ -131,22 +151,21 @@
     white-space: normal !important;
   }
   
-  /* Fix timer display that's being cut off */
+  /* Fix timer display - Correct position and make sure it's visible */
   .time-display {
-    font-size: 12px !important;
+    display: inline-block !important;
     white-space: nowrap !important;
-    margin-top: 5px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    text-align: center !important;
-    position: relative !important;
-    display: block !important;
-    width: 100% !important;
+    font-size: 12px !important;
+    position: static !important; /* Reset positioning to normal flow */
+    margin-left: 10px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    float: right !important;
   }
   
   /* Adjust the audio player layout for better fit */
   .player-container {
-    padding: 0 !important;
+    padding: 8px !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
@@ -154,17 +173,25 @@
   
   /* Ensure the audio player controls fit within the container */
   .audio-player {
-    padding: 5px !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
   }
   
   /* Make progress bar container take full width but with proper margins */
   .progress-bar-container {
     width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
     padding: 0 5px !important;
     box-sizing: border-box !important;
+    margin-bottom: 8px !important;
+    position: relative !important;
+  }
+  
+  /* Make progress bar take up most of the width */
+  .progress-bar {
+    flex: 1 !important;
+    margin-right: 10px !important;
   }
 }
 
@@ -189,11 +216,6 @@
   /* Remove any extra padding to maximize space */
   .dictation-tool {
     padding: 5px !important;
-  }
-  
-  /* Make input field taller for better typing */
-  .dictation-input {
-    min-height: 100px !important;
   }
   
   /* Even smaller font for time display on very small screens */
