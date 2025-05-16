@@ -7,15 +7,27 @@
 
 import MobileWrapper from './MobileWrapper';
 import useResponsive from './useResponsive';
+import withMobileGestures from './withMobileGestures';
+import MobileGestureInput from './MobileGestureInput';
+import AppIntegration from './AppIntegration';
+import MobileDictationAdapter from './MobileDictationAdapter';
 import './mobileStyles.css';
 
 export {
   MobileWrapper,
-  useResponsive
+  useResponsive,
+  withMobileGestures,
+  MobileGestureInput,
+  AppIntegration,
+  MobileDictationAdapter
 };
 
 // For default import
 export default {
   MobileWrapper,
-  useResponsive
+  useResponsive,
+  withMobileGestures,
+  MobileGestureInput,
+  AppIntegration,
+  MobileDictationAdapter
 }; 

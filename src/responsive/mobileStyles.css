@@ -1,7 +1,19 @@
 /* 
- * Mobile Responsive Styles
+ * Mobile Responsive Styles with Dark Mode
  * These styles will be applied only at specific breakpoints
  */
+
+/* Dark mode mobile design variables */
+:root {
+  --mobile-bg-color: #1a1a1a;
+  --mobile-surface-color: #2a2a2a;
+  --mobile-text-color: rgba(255, 255, 255, 0.9); /* Slightly transparent white for better readability */
+  --mobile-accent-color: #ff6600;
+  --mobile-error-color: #e74c3c;
+  --mobile-success-color: #2ecc71;
+  --mobile-expected-color: #95a5a6;
+  --mobile-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
 
 /* Base mobile viewport setup */
 @media screen and (max-width: 480px) {
@@ -193,6 +205,11 @@
     flex: 1 !important;
     margin-right: 10px !important;
   }
+
+  /* Hide keyboard shortcuts panel on mobile */
+  .keyboard-shortcuts-info {
+    display: none !important;
+  }
 }
 
 /* Extra small devices (phones under 375px) */
@@ -349,4 +366,424 @@
   --primary: #FF7700; /* Brighter orange */
   --text-light: #FFFFFF; /* Pure white text */
   --incorrect: #FF3333; /* Brighter red */
+}
+
+/* Mobile Gesture Input Styles */
+.mobile-gesture-container {
+  position: relative;
+  width: 100%;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: var(--mobile-surface-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease;
+}
+
+.mobile-gesture-container.gesture-active {
+  background-color: rgba(255, 102, 0, 0.2);
+}
+
+.gesture-hint {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 300px;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  border-radius: 8px;
+  padding: 15px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.hint-title {
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+  color: var(--mobile-accent-color);
+}
+
+.hint-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.hint-icon {
+  font-size: 1.2em;
+  margin-right: 10px;
+  width: 20px;
+  text-align: center;
+  color: var(--mobile-accent-color);
+}
+
+.hint-close {
+  display: block;
+  width: 100%;
+  background-color: var(--mobile-accent-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px;
+  margin-top: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.gesture-feedback {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  z-index: 50;
+  pointer-events: none;
+  border: 1px solid var(--mobile-accent-color);
+}
+
+.gesture-feedback.previous {
+  transform: translate(-60%, -50%);
+}
+
+.gesture-feedback.next {
+  transform: translate(-40%, -50%);
+}
+
+.gesture-feedback.repeat {
+  transform: translate(-50%, -60%);
+}
+
+.gesture-feedback.speed {
+  transform: translate(-50%, -40%);
+}
+
+.original-dictation-tool {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  /* This keeps it in the accessibility tree but visually hidden */
+}
+
+/* Clean up duplicate entries */
+.integrated-input-container {
+  position: relative;
+  width: 100%;
+}
+
+.gesture-input {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: none;
+  box-sizing: border-box;
+  background-color: #333;
+  color: white !important; /* Force white text */
+  opacity: 1 !important; /* Ensure visibility */
+  caret-color: #ff6600; /* Bright cursor */
+  -webkit-text-fill-color: white !important; /* For Safari */
+  text-shadow: 0 0 0 white !important; /* Additional visibility */
+  transition: none !important; /* Prevent animations that could cause flicker */
+}
+
+.gesture-input:focus {
+  outline: 2px solid var(--mobile-accent-color);
+  border-color: var(--mobile-accent-color);
+  color: white !important; /* Force white text */
+}
+
+.gesture-input.disabled {
+  background-color: #222;
+  border-color: #333;
+  opacity: 0.7;
+}
+
+/* Completely disable text correction overlay */
+.text-correction-overlay {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  z-index: -9999 !important;
+}
+
+.speed-indicator {
+  margin-top: 10px;
+  background-color: rgba(0, 0, 0, 0.1);
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.speed-pill {
+  height: 100%;
+  background-color: #ff6600;
+  border-radius: 2px;
+  text-indent: -9999px;
+  transition: width 0.3s ease;
+}
+
+/* Mobile Dictation Container */
+.mobile-dictation-container {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--mobile-bg-color);
+  color: var(--mobile-text-color);
+  min-height: 100vh;
+}
+
+/* Mobile Audio Controls */
+.mobile-audio-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--mobile-surface-color);
+  border-radius: 24px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  box-shadow: var(--mobile-card-shadow);
+  position: relative;
+  z-index: 10;
+}
+
+/* Animation for play button */
+/* @keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 102, 0, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 102, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 102, 0, 0);
+  }
+} */
+
+.mobile-control-button.play-next {
+  background-color: var(--mobile-accent-color);
+  color: white;
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-right: 12px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+  /* Remove animation */
+  /* animation: pulse 2s infinite; */
+}
+
+.mobile-control-button.play-next:active {
+  transform: scale(0.9);
+  background-color: #e65c00;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-control-button.play-next:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 50%;
+}
+
+.mobile-control-button.play-next:active:before {
+  opacity: 1;
+}
+
+/* Playing state - add visible glow */
+.mobile-control-button.play-next.playing {
+  background-color: #555;
+  box-shadow: 0 0 0 4px rgba(85, 85, 85, 0.3), 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Next ready state - show different color to indicate next action */
+.mobile-control-button.play-next.next-ready {
+  background-color: #4caf50; /* Green color to indicate "next" */
+  box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.2), 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-control-button.play-next.next-ready:active {
+  background-color: #388e3c; /* Darker green when pressed */
+}
+
+.mobile-progress-bar {
+  flex: 1;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.mobile-progress-fill {
+  height: 100%;
+  background-color: var(--mobile-accent-color);
+  border-radius: 2px;
+  transition: width 0.3s linear;
+}
+
+.mobile-speed-indicator {
+  font-size: 12px;
+  color: #666;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+}
+
+/* Text correction overlay */
+.integrated-input-container {
+  position: relative;
+  width: 100%;
+}
+
+.gesture-input {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: none;
+  box-sizing: border-box;
+  background-color: #333;
+  color: white !important; /* Force white text */
+  opacity: 1 !important; /* Ensure visibility */
+  caret-color: #ff6600; /* Bright cursor */
+  -webkit-text-fill-color: white !important; /* For Safari */
+  text-shadow: 0 0 0 white !important; /* Additional visibility */
+  transition: none !important; /* Prevent animations that could cause flicker */
+}
+
+.gesture-input:focus {
+  outline: 2px solid var(--mobile-accent-color);
+  border-color: var(--mobile-accent-color);
+  color: white !important; /* Force white text */
+}
+
+.gesture-input.disabled {
+  background-color: #222;
+  border-color: #333;
+  opacity: 0.7;
+}
+
+.text-correction-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px;
+  pointer-events: none;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  font-size: 16px;
+  line-height: 1.5;
+  font-family: inherit;
+}
+
+.correction-correct {
+  color: var(--mobile-text-color);
+}
+
+.correction-incorrect {
+  color: var(--mobile-error-color);
+  text-decoration: line-through;
+}
+
+.correction-expected {
+  color: var(--mobile-expected-color);
+  border-bottom: 1px dashed var(--mobile-expected-color);
+}
+
+.correction-extra {
+  color: var(--mobile-error-color);
+}
+
+.mobile-control-button.end-dictation {
+  background-color: var(--mobile-error-color);
+  color: white;
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.mobile-control-button.end-dictation:active {
+  transform: scale(0.95);
+  background-color: #c0392b;
+}
+
+/* Tapped animation for play button - more subtle */
+.mobile-control-button.play-next.tapped {
+  transform: scale(0.95);
+  background-color: #e65c00;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Remove the radial gradient effect for simplicity */
+.mobile-control-button.play-next.tapped:before {
+  display: none;
+}
+
+/* Error state for play button */
+.mobile-control-button.play-next.error {
+  background-color: var(--mobile-error-color);
+  animation: none;
+}
+
+.mobile-control-button.play-next.error:active {
+  background-color: #c0392b;
+}
+
+.unified-input-display {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.text-feedback {
+  margin-bottom: 5px;
+}
+
+.expected-text {
+  font-weight: 500;
+  color: #555;
 } 
