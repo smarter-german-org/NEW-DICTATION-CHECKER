@@ -9,7 +9,8 @@ const AudioPlayer = forwardRef(({
   onToggleCapitalization = () => {},
   onPrevious = () => {},
   onNext = () => {},
-  onCancel = () => {}
+  onCancel = () => {},
+  onRepeat = () => {}
 }, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -19,6 +20,7 @@ const AudioPlayer = forwardRef(({
   
   // Track current sentence boundaries using refs
   const sentenceEndTimeRef = useRef(null);
+  const sentenceStartTimeRef = useRef(0);  // Add start time tracking
   // Add flag to prevent multiple callbacks
   const endEventProcessedRef = useRef(false);
   
@@ -61,6 +63,8 @@ const AudioPlayer = forwardRef(({
     },
     seekTo: (timeInSeconds) => {
       if (audioRef.current && isLoaded) {
+        // Store the start time when seeking to a new sentence
+        sentenceStartTimeRef.current = timeInSeconds;
         audioRef.current.currentTime = timeInSeconds;
         setCurrentTime(timeInSeconds);
         // Reset the processed flag when seeking to a new position
@@ -89,7 +93,16 @@ const AudioPlayer = forwardRef(({
       if (audioRef.current && isLoaded) {
         // Reset the processed flag
         endEventProcessedRef.current = false;
-        // Play the current sentence again
+        
+        // Use the stored sentence start time
+        audioRef.current.currentTime = sentenceStartTimeRef.current;
+        
+        // The end time should still be valid from the previous setCurrentSentenceEndTime call
+        if (sentenceEndTimeRef.current === null) {
+          console.warn('No end time set for sentence repeat');
+        }
+        
+        // Start playback
         audioRef.current.play();
         return true;
       }
@@ -143,13 +156,24 @@ const AudioPlayer = forwardRef(({
   const handleRepeatSentence = () => {
     if (!isLoaded) return;
     
-    // Use the ref's repeatSentence method to properly handle repeating
-    if (ref && ref.current) {
-      ref.current.repeatSentence();
-    } else {
-      // Fallback if no ref handler
-      audioRef.current.currentTime = 0;
+    // Stop any current playback first
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    
+    // Reset flags
+    endEventProcessedRef.current = false;
+    
+    // Use the stored sentence start time
+    audioRef.current.currentTime = sentenceStartTimeRef.current;
+    
+    // Make sure we still have the end time set
+    if (sentenceEndTimeRef.current) {
+      // Start playback
       audioRef.current.play();
+      setIsPlaying(true);
+    } else {
+      console.warn('No end time set for sentence repeat');
     }
   };
   
@@ -328,7 +352,7 @@ const AudioPlayer = forwardRef(({
             
             <button 
               className="option-toggle"
-              onClick={handleRepeatSentence}
+              onClick={onRepeat}
               title="Repeat Sentence"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -360,4 +384,4 @@ const AudioPlayer = forwardRef(({
   );
 });
 
-export default AudioPlayer; 
+export default AudioPlayer;

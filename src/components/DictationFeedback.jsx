@@ -351,9 +351,7 @@ const DictationFeedback = ({
           {displayText}
         </span>
       );
-    });
-    
-    return (
+    });      return (
       <div className="user-sentence-wrapper">
         <div className="user-sentence">
           {renderElements.map((element, index) => (
@@ -361,10 +359,6 @@ const DictationFeedback = ({
               {element}
             </React.Fragment>
           ))}
-        </div>
-        <div className="expected-sentence-reference">
-          <span className="expected-label">Correct: </span>
-          {expectedText}
         </div>
       </div>
     );

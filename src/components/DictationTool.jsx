@@ -1056,7 +1056,19 @@ const DictationTool = ({ exerciseId = 1 }) => {
     if (audioRef.current && sentences.length > 0) {
       const currentSentence = sentences[currentIndexRef.current];
       if (currentSentence) {
-        playCurrentSentence(currentIndexRef.current);
+        // Stop any current playback
+        audioRef.current.pause();
+        
+        // Reset waiting state
+        setWaitingForInput(false);
+        setIsPlaying(true);
+        
+        // Re-seek to start of current sentence and set end time
+        audioRef.current.seekTo(currentSentence.startTime);
+        audioRef.current.setCurrentSentenceEndTime(currentSentence.endTime);
+        
+        // Start playback
+        audioRef.current.play();
       }
     }
   };
@@ -1590,6 +1602,7 @@ const DictationTool = ({ exerciseId = 1 }) => {
           onPrevious={handlePreviousSentence}
           onNext={() => goToNextSentence(true)}
           onCancel={handleCancelExercise}
+          onRepeat={repeatCurrentSentence}
         />
       </div>
       
@@ -1684,4 +1697,4 @@ const DictationTool = ({ exerciseId = 1 }) => {
   );
 };
 
-export default DictationTool; 
+export default DictationTool;
