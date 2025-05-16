@@ -1,0 +1,176 @@
+/* 
+ * Mobile Responsive Styles
+ * These styles will be applied only at specific breakpoints
+ */
+
+/* Base mobile viewport setup */
+@media screen and (max-width: 480px) {
+  .mobile-container {
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  /* Typography adjustments for mobile */
+  .mobile-text-larger {
+    font-size: 110%;
+  }
+
+  .mobile-heading {
+    font-size: 1.3rem;
+    margin-bottom: 0.8rem;
+  }
+
+  /* Hide elements on mobile */
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  /* Full width elements on mobile */
+  .mobile-full-width {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Increased touch targets for buttons */
+  .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 12px;
+    margin: 5px;
+  }
+
+  /* Stack elements vertically */
+  .mobile-stack {
+    display: flex;
+    flex-direction: column !important;
+  }
+
+  /* Add more space between stacked elements */
+  .mobile-stack > * {
+    margin-bottom: 15px;
+  }
+
+  /* Dictation Tool specific mobile styles */
+  .dictation-tool .audio-section {
+    flex-direction: column;
+  }
+
+  .dictation-tool .progress-wrapper {
+    width: 100%;
+  }
+
+  .dictation-tool .controls-right {
+    margin-top: 10px;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .dictation-tool .dictation-input {
+    min-height: 80px;
+    font-size: 16px; /* Prevents iOS zoom on input focus */
+  }
+
+  /* Feedback page mobile styles */
+  .dictation-feedback .feedback-stats {
+    flex-direction: column;
+  }
+
+  .dictation-feedback .stat-item {
+    margin-bottom: 10px;
+  }
+
+  /* Improve touch scrolling */
+  .text-container {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Tablet specific styles */
+@media screen and (min-width: 481px) and (max-width: 768px) {
+  .tablet-container {
+    width: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+  }
+
+  /* Adjust layout for tablets */
+  .tablet-two-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+
+  /* Dictation Tool tablet adjustments */
+  .dictation-tool .progress-wrapper {
+    flex-wrap: wrap;
+  }
+}
+
+/* General touch device optimizations (both mobile and tablet) */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase button sizes for touch */
+  button, 
+  .button, 
+  .control-button, 
+  .option-toggle {
+    min-height: 36px;
+    min-width: 36px;
+    padding: 8px 12px;
+  }
+
+  /* Add active state for touch feedback */
+  button:active, 
+  .button:active {
+    transform: scale(0.96);
+    transition: transform 0.1s;
+  }
+
+  /* Enhanced scrolling for touch devices */
+  .text-container, 
+  .scrollable {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Increase hit area for interactive elements */
+  .shortcut-row, 
+  .keyboard-shortcuts-info, 
+  .word-incorrect {
+    padding: 8px;
+  }
+}
+
+/* Utility classes that can be applied regardless of screen size */
+.mobile-center-text {
+  text-align: center;
+}
+
+.mobile-pb-0 {
+  padding-bottom: 0 !important;
+}
+
+.mobile-mt-0 {
+  margin-top: 0 !important;
+}
+
+.mobile-mb-0 {
+  margin-bottom: 0 !important;
+}
+
+.mobile-mt-1 {
+  margin-top: 0.5rem !important;
+}
+
+.mobile-mb-1 {
+  margin-bottom: 0.5rem !important;
+}
+
+/* High contrast mode for better visibility on mobile */
+.mobile-high-contrast {
+  --primary: #FF7700; /* Brighter orange */
+  --text-light: #FFFFFF; /* Pure white text */
+  --incorrect: #FF3333; /* Brighter red */
+} 
