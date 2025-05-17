@@ -366,7 +366,7 @@ const DictationFeedback = ({
   };
 
   return (
-    <div className="dictation-feedback">
+    <div className="dictation-feedback" data-screen="results">
       <h2>Dictation Results</h2>
       
       {/* Add Score Display at the top */}

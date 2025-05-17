@@ -89,11 +89,22 @@ const MobileDictationTool = (props) => {
     const container = containerRef.current;
     
     const preventDefaultScroll = (e) => {
-      // Always prevent default scroll behavior except for textarea
+      // Check if we're on the results screen
+      const resultsScreen = document.querySelector('.dictation-feedback[data-screen="results"]');
+      if (resultsScreen) {
+        // We're on the results screen, allow scrolling
+        return;
+      }
+      
+      // Allow scrolling in textareas
       let target = e.target;
       while (target && target !== document) {
         if (target.tagName && target.tagName.toLowerCase() === 'textarea') {
           return; // Allow scrolling in textareas
+        }
+        // Also check if we're inside the results/feedback screen
+        if (target.classList && target.classList.contains('dictation-feedback')) {
+          return; // Allow scrolling in feedback screen
         }
         target = target.parentNode;
       }
@@ -143,6 +154,13 @@ const MobileDictationTool = (props) => {
     const container = containerRef.current;
     
     const handleTouchStart = (e) => {
+      // Check if we're on the results screen and disable swipe gestures if so
+      const resultsScreen = document.querySelector('.dictation-feedback[data-screen="results"]');
+      if (resultsScreen) {
+        // We're on the results screen, don't track touch positions
+        return;
+      }
+      
       touchStartX.current = e.touches[0].clientX;
       touchStartY.current = e.touches[0].clientY;
     };
@@ -156,6 +174,13 @@ const MobileDictationTool = (props) => {
       
       const deltaX = touchEndX - touchStartX.current;
       const deltaY = touchEndY - touchStartY.current;
+      
+      // Check if we're on the results screen and disable swipe gestures if so
+      const resultsScreen = document.querySelector('.dictation-feedback[data-screen="results"]');
+      if (resultsScreen) {
+        // We're on the results screen, don't process swipe gestures
+        return;
+      }
       
       // Check if this is a swipe on a textarea
       let target = e.target;

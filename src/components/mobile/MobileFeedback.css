@@ -6,6 +6,23 @@
     overflow-y: auto !important;   /* Allow vertical scrolling */
     position: relative !important; /* Override any fixed positioning */
     height: auto !important;       /* Let content determine height */
+    max-height: none !important;   /* Override any max-height limitations */
+  }
+  
+  /* Target the body when showing results screen to enable scrolling */
+  body:has(.dictation-feedback[data-screen="results"]) {
+    overflow: auto !important;
+    touch-action: auto !important;
+    position: static !important;
+    height: auto !important;
+  }
+  
+  /* Ensure the container also allows scrolling when on results screen */
+  body:has(.dictation-feedback[data-screen="results"]) .mobile-dictation-container {
+    overflow: auto !important;
+    touch-action: auto !important;
+    position: relative !important;
+    height: auto !important;
   }
 
   .dictation-feedback h2 {
