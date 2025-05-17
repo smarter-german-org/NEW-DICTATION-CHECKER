@@ -73,6 +73,41 @@ const DictationToolWithRef = forwardRef((props, ref) => {
                 dictationToolRef.current.audioRef.current) {
         dictationToolRef.current.audioRef.current.pause();
       }
+    },
+
+    // Change playback speed
+    changePlaybackSpeed: () => {
+      if (dictationToolRef.current && dictationToolRef.current.changePlaybackSpeed) {
+        dictationToolRef.current.changePlaybackSpeed();
+      } else if (dictationToolRef.current && dictationToolRef.current.audioRef && 
+                dictationToolRef.current.audioRef.current) {
+        const audio = dictationToolRef.current.audioRef.current;
+        const currentSpeed = audio.playbackRate;
+        if (currentSpeed >= 1.0) audio.playbackRate = 0.75;
+        else if (currentSpeed >= 0.75) audio.playbackRate = 0.5;
+        else audio.playbackRate = 1.0;
+      }
+    },
+
+    // Get current speed
+    getCurrentSpeed: () => {
+      if (dictationToolRef.current && dictationToolRef.current.getCurrentSpeed) {
+        return dictationToolRef.current.getCurrentSpeed();
+      } else if (dictationToolRef.current && dictationToolRef.current.audioRef && 
+                dictationToolRef.current.audioRef.current) {
+        const speed = dictationToolRef.current.audioRef.current.playbackRate;
+        return Math.round(speed * 100);
+      }
+      return 100; // Default
+    },
+
+    // Get audio element
+    getAudioElement: () => {
+      if (dictationToolRef.current && dictationToolRef.current.audioRef && 
+          dictationToolRef.current.audioRef.current) {
+        return dictationToolRef.current.audioRef.current;
+      }
+      return null;
     }
   }));
 

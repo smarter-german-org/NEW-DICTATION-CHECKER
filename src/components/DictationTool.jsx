@@ -1556,7 +1556,11 @@ const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortc
     handlePreviousSentence: handlePreviousSentence,
     goToNextSentence: goToNextSentence,
     repeatCurrentSentence: repeatCurrentSentence,
-    togglePlayPause: togglePlayPause
+    togglePlayPause: togglePlayPause,
+    changePlaybackSpeed: changePlaybackSpeed,
+    getCurrentSpeed: getCurrentSpeed,
+    audioRef: audioRef, // Expose the audioRef directly
+    getAudioElement: () => audioRef.current // Helper method to get the audio element
   }));
 
   // Add an explicit direct handler for the AudioPlayer
@@ -1622,6 +1626,27 @@ const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortc
     if (audioRef.current) {
       audioRef.current.pause();
     }
+  };
+
+  const changePlaybackSpeed = () => {
+    console.log("Changing playback speed");
+    if (audioRef.current) {
+      const currentSpeed = audioRef.current.playbackRate;
+      if (currentSpeed >= 1.0) {
+        audioRef.current.playbackRate = 0.75;
+      } else if (currentSpeed >= 0.75) {
+        audioRef.current.playbackRate = 0.5;
+      } else {
+        audioRef.current.playbackRate = 1.0;
+      }
+    }
+  };
+
+  const getCurrentSpeed = () => {
+    if (audioRef.current) {
+      return Math.round(audioRef.current.playbackRate * 100);
+    }
+    return 100; // Default
   };
 
   if (isLoading) {

@@ -232,28 +232,66 @@ const MobileDictationTool = (props) => {
               }
             }
           } else {
-            // Swipe down (finger moves down) - toggle play/pause
-            console.log("Swipe down - toggle play/pause");
+            // Swipe down (finger moves down) - change playback speed
+            console.log("Swipe down - change playback speed");
             if (dictationToolRef.current) {
               try {
-                if (typeof dictationToolRef.current.togglePlayPause === 'function') {
-                  dictationToolRef.current.togglePlayPause();
-                  showSwipeFeedback("Play/Pause");
-                } else if (typeof dictationToolRef.current.audioRef?.current?.pause === 'function') {
-                  // Direct fallback to audio element
-                  const audio = dictationToolRef.current.audioRef.current;
-                  if (audio.paused) {
-                    audio.play();
-                    showSwipeFeedback("Play");
+                // Directly find the audio element in the DOM for most reliable access
+                const audioElement = document.querySelector('audio');
+                
+                if (audioElement) {
+                  // Get the current playback rate
+                  const currentSpeed = audioElement.playbackRate;
+                  console.log("Current audio speed:", currentSpeed);
+                  let newSpeed;
+                  
+                  // Cycle through speeds with very clear thresholds
+                  if (Math.abs(currentSpeed - 1.0) < 0.1) { // Very close to 1.0
+                    newSpeed = 0.75;
+                    showSwipeFeedback("Speed: 75%");
+                  } else if (Math.abs(currentSpeed - 0.75) < 0.1) { // Very close to 0.75
+                    newSpeed = 0.5;
+                    showSwipeFeedback("Speed: 50%");
                   } else {
-                    audio.pause();
-                    showSwipeFeedback("Pause");
+                    newSpeed = 1.0;
+                    showSwipeFeedback("Speed: 100%");
                   }
+                  
+                  console.log("Setting new speed to:", newSpeed);
+                  
+                  // Apply the new speed directly to the audio element
+                  audioElement.playbackRate = newSpeed;
+                  
+                  // For debugging - verify the speed was actually changed
+                  setTimeout(() => {
+                    console.log("Speed after change:", audioElement.playbackRate);
+                  }, 100);
+                  
+                  // Also try to set the speed using the method from the ref
+                  if (typeof dictationToolRef.current.changePlaybackSpeed === 'function') {
+                    dictationToolRef.current.changePlaybackSpeed(newSpeed);
+                  }
+                  
+                  // Force a redraw/update by touching the DOM
+                  audioElement.volume = audioElement.volume;
                 } else {
-                  console.error("No play/pause function available");
+                  console.error("No audio element found in the DOM");
+                  
+                  // Fallback to using the component method
+                  if (typeof dictationToolRef.current.changePlaybackSpeed === 'function') {
+                    dictationToolRef.current.changePlaybackSpeed();
+                    
+                    // Try to get the speed for display
+                    if (dictationToolRef.current.getCurrentSpeed) {
+                      const speed = dictationToolRef.current.getCurrentSpeed();
+                      showSwipeFeedback("Speed: " + speed + "%");
+                    } else {
+                      showSwipeFeedback("Speed changed");
+                    }
+                  }
                 }
               } catch (err) {
-                console.error("Error toggling play/pause:", err);
+                console.error("Error changing playback speed:", err);
               }
             }
           }
@@ -313,7 +351,7 @@ const MobileDictationTool = (props) => {
         </div>
         <div style={styles.indicator}>
           <span style={styles.icon}>↓</span>
-          <span>Play/Pause</span>
+          <span>Speed</span>
         </div>
       </div>
       
