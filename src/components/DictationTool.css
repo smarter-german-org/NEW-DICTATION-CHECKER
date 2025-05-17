@@ -82,6 +82,14 @@ body {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
+.start-instructions {
+  color: #888;
+  font-size: 18px;
+  text-align: center;
+  margin: 20px 0;
+  font-style: italic;
+}
+
 .sentence-counter {
   text-align: center;
   color: var(--text-light);
@@ -745,4 +753,4 @@ kbd {
 .hint-sentence,
 .hint-space {
   /* Reset to avoid conflicts */
-} 
+}

@@ -50,3 +50,19 @@
 .keyboard-shortcuts-info {
   display: none !important;
 }
+
+/* Add these styles for the audio player in the start screen */
+.mobile-audio-player-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+@media (orientation: portrait) {
+  .mobile-audio-player-container {
+    padding: 15px;
+  }
+}

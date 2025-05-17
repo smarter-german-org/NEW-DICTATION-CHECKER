@@ -1,40 +1,24 @@
+/* 
+ * Mobile Responsive Controls CSS
+ * Controls visibility of UI elements based on device orientation
+ */
+
 @media (orientation: portrait) and (max-width: 767px) {
-  /* Hide timer display in portrait mode */
-  .audio-player .time-display {
-    display: none !important;
-  }
-  
-  /* Hide capitalization toggle button in portrait mode */
+  /* Hide elements in portrait mode */
+  .audio-player .time-display,
   .option-toggle[title*="Case Sensitivity"],
-  .audio-controls .option-toggle[title*="Case Sensitivity"] {
-    display: none !important;
-  }
-  
-  /* Hide speed button in portrait mode - target all possible class names */
-  .speed-toggle,
-  .audio-controls .speed-toggle,
-  button[title*="Speed"],
-  .audio-player .speed-toggle {
-    display: none !important;
-  }
-  
-  /* Hide repeat button in portrait mode - target all possible class names */
+  .audio-controls .option-toggle[title*="Case Sensitivity"],
+  .playback-speed-button,
+  .audio-player .playback-speed-button,
   .repeat-button,
   .audio-controls .repeat-button,
-  button[title*="Repeat"],
-  .audio-player .repeat-button {
-    display: none !important;
-  }
-  
-  /* Hide speed button in portrait mode */
-  .playback-speed-button,
-  .audio-player .playback-speed-button {
-    display: none !important;
-  }
-  
-  /* Hide repeat button in portrait mode */
+  .audio-player .repeat-button,
   .option-toggle[title*="Repeat"],
-  .audio-player .option-toggle[title*="Repeat"] {
+  .audio-player .option-toggle[title*="Repeat"],
+  button[title*="Speed"],
+  button[title*="Repeat"],
+  .speed-button,
+  .speed-toggle {
     display: none !important;
   }
   
@@ -43,37 +27,46 @@
   .audio-player .cancel-button {
     display: flex !important;
     margin-left: auto;
+    margin-top: 8px; /* Add space between progress bar and X button */
+    padding: 10px; /* Increase touch target size */
+  }
+  
+  /* Make the progress wrapper fullwidth to avoid conflicts */
+  .audio-player .progress-wrapper {
+    width: 100%;
+    flex-direction: column;
   }
   
   /* Adjust spacing for other buttons */
   .controls-right,
   .audio-player .controls-right {
     justify-content: flex-end;
+    margin-top: 4px; /* Add space between progress bar and controls */
   }
 }
 
 @media (orientation: landscape) {
-  /* Ensure timer and capitalization toggle are visible in landscape */
-  .audio-controls .time-display,
-  .audio-controls .capitalization-toggle {
-    display: flex !important;
-  }
-}
-
-/* Ensure proper display in landscape mode */
-@media (orientation: landscape) {
-  .audio-player .time-display,
-  .audio-player .option-toggle[title*="Case Sensitivity"],
-  .audio-player .speed-toggle,
-  .audio-player .repeat-button {
-    display: flex !important;
-  }
-  
   /* Ensure all controls are visible in landscape */
+  .audio-player .time-display,
+  .audio-controls .time-display,
+  .option-toggle[title*="Case Sensitivity"],
+  .audio-controls .option-toggle[title*="Case Sensitivity"],
+  .audio-player .option-toggle[title*="Case Sensitivity"],
   .playback-speed-button,
   .audio-player .playback-speed-button,
+  .speed-toggle,
+  .audio-player .speed-toggle,
+  .repeat-button,
+  .audio-controls .repeat-button,
+  .audio-player .repeat-button,
   .option-toggle[title*="Repeat"],
   .audio-player .option-toggle[title*="Repeat"] {
     display: flex !important;
+  }
+
+  /* Ensure controls are properly spaced in landscape */
+  .audio-player .cancel-button {
+    display: flex !important;
+    margin-left: 8px;
   }
 }

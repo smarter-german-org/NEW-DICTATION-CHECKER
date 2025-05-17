@@ -1345,24 +1345,16 @@ const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortc
   };
 
   // Modified to handle audio playback with automatic exercise start
-  const handleAudioPlayStateChange = (isAudioPlaying) => {
-    setIsPlaying(isAudioPlaying);
-    
-    // If audio starts playing and exercise hasn't started yet, start the exercise
-    if (isAudioPlaying && !exerciseStarted) {
-      debug('AUTO_START', 'Starting exercise from audio play');
-      startExercise();
-    }
-    
-    // When audio stops, focus the input field
-    if (!isAudioPlaying && exerciseStarted) {
-      debug('AUDIO_STOPPED', 'Audio playback stopped, focusing input field');
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-          setWaitingForInput(true);
-        }
-      }, 100);
+  const handleAudioPlayStateChange = (state) => {
+    if (state === 'playing') {
+      setIsPlaying(true);
+      
+      // If the exercise hasn't started yet, start it now
+      if (!exerciseStarted) {
+        handleStartExercise();
+      }
+    } else if (state === 'paused') {
+      setIsPlaying(false);
     }
   };
   
@@ -1559,7 +1551,12 @@ const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortc
       prepareResultsData();
     }
   }, [showFeedbackScreen, dictationResults]);
-  
+
+  useImperativeHandle(ref, () => ({
+    startExercise: handleStartExercise,
+    cancelExercise: handleCancelExercise // Ensure this is defined
+  }));
+
   if (isLoading) {
     return <div className="loading">Loading exercise...</div>;
   }
@@ -1686,13 +1683,9 @@ const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortc
             </>
           ) : (
             <div className="start-section">
-              <button 
-                className="start-button"
-                onClick={handleStartExercise}
-                disabled={isLoading}
-              >
-                Start Dictation
-              </button>
+              <div className="start-instructions">
+                Press play to start
+              </div>
             </div>
           )}
         </div>

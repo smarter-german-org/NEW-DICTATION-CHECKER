@@ -98,7 +98,16 @@ const MobileAudioPlayer = forwardRef(({
     
     if (isPlaying) {
       audioRef.current.pause();
+      if (onPlayStateChange) {
+        onPlayStateChange('paused');
+      }
     } else {
+      // If starting to play, notify parent
+      if (onPlayStateChange) {
+        onPlayStateChange('playing');
+      }
+      
+      // Start playback
       audioRef.current.play();
     }
   };
@@ -167,6 +176,13 @@ const MobileAudioPlayer = forwardRef(({
     setIsPlaying(playing);
     if (onPlayStateChange) onPlayStateChange(playing);
   };
+
+  const handleCancel = () => {
+    console.log("Mobile cancel button clicked"); // Add logging
+    if (onCancel) {
+      onCancel();
+    }
+  };
   
   return (
     <div className="mobile-audio-player">
@@ -220,14 +236,11 @@ const MobileAudioPlayer = forwardRef(({
         
         {/* Cancel button */}
         <button 
-          className="mobile-cancel-button"
-          onClick={() => { console.log('[MOBILE X BUTTON] Clicked'); if (typeof onCancel === 'function') { onCancel(); } }}
-          title="Stop Dictation and Show Results"
+          className="cancel-button" 
+          onClick={handleCancel}
+          title="Cancel exercise"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 6L6 18" />
-            <path d="M6 6l12 12" />
-          </svg>
+          <span>✕</span>
         </button>
       </div>
       

@@ -123,7 +123,17 @@ const AudioPlayer = forwardRef(({
     
     if (isPlaying) {
       audioRef.current.pause();
+      if (onPlayStateChange) {
+        onPlayStateChange('paused');
+      }
     } else {
+      // If we're not playing, start playback
+      if (onPlayStateChange) {
+        // Signal that we're starting playback
+        onPlayStateChange('playing');
+      }
+      
+      // Start playback
       audioRef.current.play();
     }
   };
@@ -269,6 +279,13 @@ const AudioPlayer = forwardRef(({
     // Update the state to reflect the new speed
     setPlaybackSpeed(newSpeed);
   };
+
+  // Check the cancel button implementation
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+    }
+  };
   
   return (
     <div className="audio-player">
@@ -370,13 +387,10 @@ const AudioPlayer = forwardRef(({
             
             <button 
               className="cancel-button"
-              onClick={() => { console.log('[X BUTTON] Clicked'); if (typeof onCancel === 'function') { onCancel(); } }}
-              title="Stop Dictation and Show Results"
+              onClick={handleCancel}
+              title="Cancel exercise"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 6L6 18" />
-                <path d="M6 6l12 12" />
-              </svg>
+              <span>✕</span>
             </button>
           </div>
         </div>
