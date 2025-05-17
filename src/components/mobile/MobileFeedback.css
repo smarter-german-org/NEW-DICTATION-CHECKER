@@ -2,6 +2,10 @@
 @media (max-width: 768px) {
   .dictation-feedback {
     padding: 15px 10px;
+    touch-action: auto !important; /* Enable scrolling on the feedback screen */
+    overflow-y: auto !important;   /* Allow vertical scrolling */
+    position: relative !important; /* Override any fixed positioning */
+    height: auto !important;       /* Let content determine height */
   }
 
   .dictation-feedback h2 {

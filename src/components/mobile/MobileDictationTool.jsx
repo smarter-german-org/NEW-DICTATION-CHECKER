@@ -335,26 +335,6 @@ const MobileDictationTool = (props) => {
         />
       </div>
       
-      {/* Swipe indicators at the bottom */}
-      <div style={styles.indicators}>
-        <div style={styles.indicator}>
-          <span style={styles.icon}>←</span>
-          <span>Previous</span>
-        </div>
-        <div style={styles.indicator}>
-          <span style={styles.icon}>→</span>
-          <span>Next</span>
-        </div>
-        <div style={styles.indicator}>
-          <span style={styles.icon}>↑</span>
-          <span>Repeat</span>
-        </div>
-        <div style={styles.indicator}>
-          <span style={styles.icon}>↓</span>
-          <span>Speed</span>
-        </div>
-      </div>
-      
       {swipeFeedback && (
         <div style={styles.feedback}>
           {swipeFeedback}
