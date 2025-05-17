@@ -8,7 +8,6 @@ const DictationToolWithRef = forwardRef((props, ref) => {
   useImperativeHandle(ref, () => ({
     // Start the exercise
     startExercise: () => {
-      console.log("startExercise called via ref");
       if (dictationToolRef.current && dictationToolRef.current.startExercise) {
         dictationToolRef.current.startExercise();
       }
@@ -16,18 +15,16 @@ const DictationToolWithRef = forwardRef((props, ref) => {
     
     // Cancel the exercise
     cancelExercise: () => {
-      console.log("cancelExercise called via ref in DictationToolWithRef");
+      console.log("Cancel exercise called via ref");
       if (dictationToolRef.current && dictationToolRef.current.cancelExercise) {
         dictationToolRef.current.cancelExercise();
-      } else {
-        console.error("cancelExercise not available on dictationToolRef");
       }
     },
     
     // Handle navigation - going to next sentence
-    goToNextSentence: (force = false) => {
+    goToNextSentence: (skipInput) => {
       if (dictationToolRef.current && dictationToolRef.current.goToNextSentence) {
-        dictationToolRef.current.goToNextSentence(force);
+        dictationToolRef.current.goToNextSentence(skipInput);
       }
     },
     
@@ -39,16 +36,42 @@ const DictationToolWithRef = forwardRef((props, ref) => {
     },
     
     // Play the current sentence again
-    playCurrentSentence: () => {
-      if (dictationToolRef.current && dictationToolRef.current.playCurrentSentence) {
-        dictationToolRef.current.playCurrentSentence();
+    repeatCurrentSentence: () => {
+      console.log("Repeating current sentence from ref");
+      if (dictationToolRef.current && dictationToolRef.current.repeatCurrentSentence) {
+        dictationToolRef.current.repeatCurrentSentence();
+      } else if (dictationToolRef.current && dictationToolRef.current.audioRef && 
+                dictationToolRef.current.audioRef.current) {
+        // Fallback if method doesn't exist
+        dictationToolRef.current.audioRef.current.currentTime = 0;
+        dictationToolRef.current.audioRef.current.play();
       }
     },
     
-    // Basic navigation - next sentence without force
-    handleNextSentence: () => {
-      if (dictationToolRef.current && dictationToolRef.current.handleNextSentence) {
-        dictationToolRef.current.handleNextSentence();
+    // Toggle play/pause
+    togglePlayPause: () => {
+      console.log("Toggling play/pause from ref");
+      if (dictationToolRef.current && dictationToolRef.current.togglePlayPause) {
+        dictationToolRef.current.togglePlayPause();
+      } else if (dictationToolRef.current && dictationToolRef.current.audioRef && 
+                dictationToolRef.current.audioRef.current) {
+        // Fallback if method doesn't exist
+        const audio = dictationToolRef.current.audioRef.current;
+        if (audio.paused) {
+          audio.play();
+        } else {
+          audio.pause();
+        }
+      }
+    },
+    
+    // Pause audio
+    pauseAudio: () => {
+      if (dictationToolRef.current && dictationToolRef.current.pauseAudio) {
+        dictationToolRef.current.pauseAudio();
+      } else if (dictationToolRef.current && dictationToolRef.current.audioRef && 
+                dictationToolRef.current.audioRef.current) {
+        dictationToolRef.current.audioRef.current.pause();
       }
     }
   }));

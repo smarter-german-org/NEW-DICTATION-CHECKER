@@ -1552,7 +1552,11 @@ const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortc
 
   useImperativeHandle(ref, () => ({
     startExercise: handleStartExercise,
-    cancelExercise: handleCancelExercise
+    cancelExercise: handleCancelExercise,
+    handlePreviousSentence: handlePreviousSentence,
+    goToNextSentence: goToNextSentence,
+    repeatCurrentSentence: repeatCurrentSentence,
+    togglePlayPause: togglePlayPause
   }));
 
   // Add an explicit direct handler for the AudioPlayer
@@ -1600,6 +1604,24 @@ const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortc
         inputRef.current.focus();
       }
     }, 100);
+  };
+
+  const togglePlayPause = () => {
+    console.log("Toggling play/pause");
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+    }
+  };
+
+  const pauseAudio = () => {
+    console.log("Pausing audio");
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
   };
 
   if (isLoading) {
