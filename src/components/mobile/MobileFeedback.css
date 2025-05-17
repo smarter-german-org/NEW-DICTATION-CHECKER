@@ -8,6 +8,8 @@
     height: auto !important;
     width: 100% !important;
     overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important; /* Smooth scrolling for iOS */
+    overscroll-behavior-y: contain !important; /* Prevent page refresh on pull-to-refresh gestures */
   }
 
   /* Main feedback container */
@@ -91,11 +93,15 @@
   .dictation-feedback h2,
   .score-display,
   .side-by-side-comparison,
-  .text-container {
+  .text-container,
+  .feedback-stats,
+  .stat-item,
+  .comparison-column {
     text-align: center !important;
     width: 90% !important;
     margin-left: auto !important;
     margin-right: auto !important;
+    max-width: 500px !important; /* Consistent maximum width for all elements */
   }
 
   .side-by-side-comparison {
@@ -110,26 +116,27 @@
   /* Make the restart/new dictation button more visible and centered */
   .restart-button {
     display: block !important;
-    margin: 40px auto 80px !important; /* Good bottom margin to ensure it's reachable */
-    padding: 15px 30px !important;     /* Larger tap target */
-    font-size: 18px !important;        /* Larger text */
+    margin: 40px auto 120px !important; /* Increased bottom margin to ensure button is fully visible above browser UI */
+    padding: 15px 35px !important;     /* Larger tap target */
+    font-size: 20px !important;        /* Larger text for better visibility */
     background-color: #FF5500 !important; /* Match brand color */
     color: white !important;
     border: none !important;
     border-radius: 30px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important; /* Enhanced shadow for better visibility */
     width: auto !important;
-    min-width: 200px !important;
+    min-width: 220px !important;       /* Slightly wider minimum width */
     text-align: center !important;
     position: relative !important;     /* Ensure it's in the normal document flow */
     z-index: 100 !important;           /* Make sure it's above other elements */
+    transform: translateY(0) !important; /* Ensure no transforms affect positioning */
   }
   
   /* Add extra padding to the bottom of the screen to ensure scrollability */
   .dictation-feedback::after {
     content: "";
     display: block;
-    height: 50px; /* Extra space at bottom */
+    height: 100px; /* Increased extra space at bottom for better scrollability */
   }
 
   .text-container {
@@ -137,12 +144,7 @@
     font-size: 14px;
   }
 
-  .restart-button {
-    padding: 12px 20px;
-    width: 100%;
-    font-size: 16px;
-    margin-top: 15px;
-  }
+  /* Remove duplicate .restart-button styling that might conflict with the more comprehensive one above */
 
   .word-tooltip {
     min-width: 100px;
