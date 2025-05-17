@@ -3,12 +3,14 @@ import './MobileAudioPlayer.css';
 
 // Mobile-specific simplified version of the audio player
 // This version has minimal controls (just play, speed, and cancel buttons)
-const MobileAudioPlayer = forwardRef(({ 
-  audioSrc, 
-  onEnded, 
-  onPlayStateChange,
-  onCancel = () => {}
-}, ref) => {
+const MobileAudioPlayer = forwardRef((props, ref) => {
+  const { 
+    audioSrc, 
+    onEnded, 
+    onPlayStateChange,
+    onCancel = () => {}
+  } = props;
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -177,10 +179,19 @@ const MobileAudioPlayer = forwardRef(({
     if (onPlayStateChange) onPlayStateChange(playing);
   };
 
+  // Fix the cancel button handler
   const handleCancel = () => {
-    console.log("Mobile cancel button clicked"); // Add logging
-    if (onCancel) {
-      onCancel();
+    console.log("Cancel button clicked in MobileAudioPlayer");
+    
+    // Try to handle directly
+    if (typeof props.onCancel === 'function') {
+      console.log("Calling onCancel from props");
+      props.onCancel();
+    } else {
+      console.error("No onCancel handler provided");
+      // Try an alternate approach - dispatch a custom event
+      const cancelEvent = new CustomEvent('dictationCancel');
+      document.dispatchEvent(cancelEvent);
     }
   };
   

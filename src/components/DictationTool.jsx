@@ -1437,10 +1437,8 @@ const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortc
 
   // Handler for cancel button click
   const handleCancelExercise = () => {
-    // Only show dialog if exercise has started
-    if (exerciseStarted) {
-      setIsConfirmDialogOpen(true);
-    }
+    console.log("handleCancelExercise called in DictationTool");
+    openConfirmDialog();
   };
   
   // Confirm cancel and show results
@@ -1554,8 +1552,55 @@ const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortc
 
   useImperativeHandle(ref, () => ({
     startExercise: handleStartExercise,
-    cancelExercise: handleCancelExercise // Ensure this is defined
+    cancelExercise: handleCancelExercise
   }));
+
+  // Add an explicit direct handler for the AudioPlayer
+  const handleAudioCancel = () => {
+    console.log("handleAudioCancel called from AudioPlayer");
+    openConfirmDialog();
+  };
+
+  // Add event listener for custom cancel event
+  useEffect(() => {
+    const handleCancelEvent = () => {
+      console.log("Caught dictationCancel event in DictationTool");
+      openConfirmDialog();
+    };
+    
+    document.addEventListener('dictationCancel', handleCancelEvent);
+    
+    return () => {
+      document.removeEventListener('dictationCancel', handleCancelEvent);
+    };
+  }, []);
+
+  // Update the openConfirmDialog function to ensure it's defined
+  const openConfirmDialog = () => {
+    console.log("openConfirmDialog called");
+    setIsConfirmDialogOpen(true);
+  };
+
+  const handleSentenceEnded = () => {
+    console.log("Audio ended for current sentence");
+    
+    // Clear any pending timeouts
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
+    setIsPlaying(false);
+    setWaitingForInput(true);
+    
+    // Ensure input field is enabled and focused when audio stops
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.disabled = false;
+        inputRef.current.focus();
+      }
+    }, 100);
+  };
 
   if (isLoading) {
     return <div className="loading">Loading exercise...</div>;
@@ -1587,19 +1632,10 @@ const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortc
           onPlayStateChange={handleAudioPlayStateChange}
           checkCapitalization={checkCapitalization}
           onToggleCapitalization={() => setCheckCapitalization(prev => !prev)}
-          onEnded={() => {
-            debug("AUDIO_ENDED", "Audio has reached the end of a sentence");
-            setIsPlaying(false);
-            if (inputRef.current) {
-              setTimeout(() => {
-                inputRef.current.focus();
-                setWaitingForInput(true);
-              }, 100);
-            }
-          }}
+          onEnded={() => handleSentenceEnded()}
           onPrevious={handlePreviousSentence}
           onNext={() => goToNextSentence(true)}
-          onCancel={handleCancelExercise}
+          onCancel={handleAudioCancel} // Use the explicit handler
           onRepeat={repeatCurrentSentence}
         />
       </div>
@@ -1676,7 +1712,7 @@ const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortc
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
                   placeholder="Type what you hear, then press Enter..."
-                  disabled={isPlaying}
+                  disabled={false} // Always enable input
                   autoFocus
                 />
               </div>

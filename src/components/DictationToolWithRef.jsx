@@ -2,15 +2,25 @@ import React, { forwardRef, useImperativeHandle, useRef } from 'react';
 import DictationTool from './DictationTool';
 
 const DictationToolWithRef = forwardRef((props, ref) => {
-  // Create internal ref to forward to the DictationTool
   const dictationToolRef = useRef(null);
   
   // Expose methods to parent components through ref
   useImperativeHandle(ref, () => ({
     // Start the exercise
     startExercise: () => {
-      if (dictationToolRef.current && dictationToolRef.current.handleStartExercise) {
-        dictationToolRef.current.handleStartExercise();
+      console.log("startExercise called via ref");
+      if (dictationToolRef.current && dictationToolRef.current.startExercise) {
+        dictationToolRef.current.startExercise();
+      }
+    },
+    
+    // Cancel the exercise
+    cancelExercise: () => {
+      console.log("cancelExercise called via ref in DictationToolWithRef");
+      if (dictationToolRef.current && dictationToolRef.current.cancelExercise) {
+        dictationToolRef.current.cancelExercise();
+      } else {
+        console.error("cancelExercise not available on dictationToolRef");
       }
     },
     
@@ -46,4 +56,4 @@ const DictationToolWithRef = forwardRef((props, ref) => {
   return <DictationTool {...props} ref={dictationToolRef} />;
 });
 
-export default DictationToolWithRef; 
+export default DictationToolWithRef;

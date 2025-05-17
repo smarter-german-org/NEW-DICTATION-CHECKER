@@ -114,6 +114,13 @@ body {
   text-align: left;
 }
 
+/* Add padding to the text box to prevent text from touching borders */
+.dictation-input-area textarea {
+  padding: 10px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
 /* Ensure cursor blinks visibly */
 @keyframes blink-caret {
   from, to { caret-color: transparent; }
@@ -180,6 +187,7 @@ body {
   height: auto;
   overflow: visible;
   transition: opacity 0.3s ease, transform 0.3s ease;
+  margin-bottom: 10px;
 }
 
 .feedback-container.real-time {
@@ -221,6 +229,12 @@ body {
   color: var(--text-light);
   vertical-align: middle;
   text-align: left;
+}
+
+/* Fix the underline spacing */
+.character-feedback .char {
+  margin-bottom: 2px;
+  display: inline-block;
 }
 
 /* Updated styles for word-based feedback */

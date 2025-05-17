@@ -24,28 +24,22 @@ const MobileDictationTool = (props) => {
     }, 100);
   };
 
-  const handleCancel = () => {
-    console.log("MobileDictationTool cancel called"); // Add logging
+  // Direct cancel handler that doesn't rely on the ref
+  const handleDirectCancel = () => {
+    console.log("Direct cancel handler in MobileDictationTool");
+    // Use the props.onCancel if available
+    if (props.onCancel && typeof props.onCancel === 'function') {
+      console.log("Calling props.onCancel directly");
+      props.onCancel();
+      return;
+    }
     
-    // Check if we can access the dictationToolRef
-    if (dictationToolRef.current) {
-      console.log("DictationToolRef available, checking for cancelExercise method");
-      
-      // Check if the cancelExercise method exists
-      if (typeof dictationToolRef.current.cancelExercise === 'function') {
-        console.log("Calling cancelExercise method");
-        dictationToolRef.current.cancelExercise();
-      } else {
-        console.error("cancelExercise method not found on dictationToolRef");
-        
-        // Fallback to props.onCancel if available
-        if (props.onCancel) {
-          console.log("Falling back to props.onCancel");
-          props.onCancel();
-        }
-      }
+    // Otherwise try to use the ref
+    if (dictationToolRef.current && dictationToolRef.current.cancelExercise) {
+      console.log("Calling cancelExercise on dictationToolRef");
+      dictationToolRef.current.cancelExercise();
     } else {
-      console.error("dictationToolRef is not available");
+      console.error("No cancel method available");
     }
   };
 
@@ -54,7 +48,7 @@ const MobileDictationTool = (props) => {
       component: MobileAudioPlayer,
       additionalProps: {
         onStartDictation: handleStartDictation,
-        onCancel: handleCancel // Make sure this is passed
+        onCancel: handleDirectCancel // Use the direct handler
       }
     };
   };

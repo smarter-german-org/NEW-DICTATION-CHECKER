@@ -22,26 +22,59 @@
     display: none !important;
   }
   
-  /* Ensure X button is visible and properly positioned */
+  /* Ensure progress bar is visible */
+  .audio-player .progress-bar-container,
+  .audio-player .progress-bar,
+  .audio-player .progress-fill {
+    display: block !important;
+    width: 100%;
+  }
+  
+  /* Fix progress wrapper layout using flexbox */
+  .audio-player .progress-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  
+  /* Adjust progress bar to take appropriate space */
+  .audio-player .progress-bar-container {
+    flex: 1;
+    margin-right: 10px; /* Add space between progress bar and X button */
+  }
+  
+  /* Position X button with flexbox instead of absolute positioning */
   .cancel-button,
   .audio-player .cancel-button {
     display: flex !important;
-    margin-left: auto;
-    margin-top: 8px; /* Add space between progress bar and X button */
-    padding: 10px; /* Increase touch target size */
+    position: static; /* Remove absolute positioning */
+    padding: 6px;
+    z-index: 100;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    min-width: 24px;
+    min-height: 24px;
+    justify-content: center;
+    align-items: center;
+    margin: 0; /* Remove any margin */
   }
   
-  /* Make the progress wrapper fullwidth to avoid conflicts */
-  .audio-player .progress-wrapper {
-    width: 100%;
-    flex-direction: column;
+  /* Make X visible with proper color */
+  .cancel-button span,
+  .audio-player .cancel-button span {
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
   }
   
   /* Adjust spacing for other buttons */
   .controls-right,
   .audio-player .controls-right {
     justify-content: flex-end;
-    margin-top: 4px; /* Add space between progress bar and controls */
+    position: relative;
+    padding-top: 10px;
   }
 }
 
@@ -68,5 +101,20 @@
   .audio-player .cancel-button {
     display: flex !important;
     margin-left: 8px;
+  }
+
+  /* Ensure X button is visible and properly positioned */
+  .cancel-button,
+  .audio-player .cancel-button {
+    display: flex !important;
+    position: static; /* Reset any absolute positioning */
+    margin: 0 0 0 8px;
+    padding: 12px; /* Larger padding for better touch target */
+    z-index: 100;
+    min-width: 24px; /* WCAG recommended minimum touch target size */
+    min-height: 24px;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
   }
 }

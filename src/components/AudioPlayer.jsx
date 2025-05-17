@@ -281,9 +281,23 @@ const AudioPlayer = forwardRef(({
   };
 
   // Check the cancel button implementation
-  const handleCancel = () => {
-    if (onCancel) {
+  const handleCancel = (e) => {
+    // Stop the event to prevent any bubbling issues
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log("Cancel button clicked in AudioPlayer");
+    
+    // Try the prop callback first
+    if (typeof onCancel === 'function') {
+      console.log("Calling onCancel prop");
       onCancel();
+    } 
+    // Fallback - dispatch custom event
+    else {
+      console.log("Dispatching custom cancelDictation event");
+      const cancelEvent = new CustomEvent('dictationCancel');
+      document.dispatchEvent(cancelEvent);
     }
   };
   
