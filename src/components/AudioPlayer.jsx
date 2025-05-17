@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import './AudioPlayer.css';
+import './mobile/MobileResponsiveControls.css';
 
 const AudioPlayer = forwardRef(({ 
   audioSrc, 

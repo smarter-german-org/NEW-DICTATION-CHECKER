@@ -1,0 +1,245 @@
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import './MobileAudioPlayer.css';
+
+// Mobile-specific simplified version of the audio player
+// This version has minimal controls (just play, speed, and cancel buttons)
+const MobileAudioPlayer = forwardRef(({ 
+  audioSrc, 
+  onEnded, 
+  onPlayStateChange,
+  onCancel = () => {}
+}, ref) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
+  
+  // Track current sentence boundaries using refs
+  const sentenceEndTimeRef = useRef(null);
+  const sentenceStartTimeRef = useRef(0);
+  const endEventProcessedRef = useRef(false);
+  
+  const audioRef = useRef(null);
+  
+  // Handle audio source change
+  useEffect(() => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+    setIsLoaded(false);
+    
+    // Reset audio element
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current.load();
+    }
+  }, [audioSrc]);
+  
+  // Expose audio methods to parent component - same as desktop version
+  useImperativeHandle(ref, () => ({
+    play: () => {
+      if (audioRef.current && isLoaded) {
+        endEventProcessedRef.current = false;
+        audioRef.current.play();
+      }
+    },
+    pause: () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    },
+    stop: () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    },
+    seekTo: (timeInSeconds) => {
+      if (audioRef.current && isLoaded) {
+        sentenceStartTimeRef.current = timeInSeconds;
+        audioRef.current.currentTime = timeInSeconds;
+        setCurrentTime(timeInSeconds);
+        endEventProcessedRef.current = false;
+        return true;
+      }
+      return false;
+    },
+    setCurrentSentenceEndTime: (endTimeInSeconds) => {
+      sentenceEndTimeRef.current = endTimeInSeconds;
+      endEventProcessedRef.current = false;
+      console.log("Set sentence end time to:", endTimeInSeconds);
+    },
+    getCurrentTime: () => {
+      return audioRef.current ? audioRef.current.currentTime : 0;
+    },
+    getDuration: () => {
+      return audioRef.current ? audioRef.current.duration : 0;
+    },
+    repeatSentence: () => {
+      if (audioRef.current && isLoaded) {
+        endEventProcessedRef.current = false;
+        audioRef.current.currentTime = sentenceStartTimeRef.current;
+        
+        if (sentenceEndTimeRef.current === null) {
+          console.warn('No end time set for sentence repeat');
+        }
+        
+        audioRef.current.play();
+        return true;
+      }
+      return false;
+    }
+  }));
+  
+  const handlePlayPause = () => {
+    if (!isLoaded) return;
+    
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+  };
+  
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      const currentAudioTime = audioRef.current.currentTime;
+      setCurrentTime(currentAudioTime);
+      
+      // Check if we've reached the end of the current sentence
+      if (sentenceEndTimeRef.current !== null && 
+          currentAudioTime >= sentenceEndTimeRef.current && 
+          !endEventProcessedRef.current) {
+        
+        console.log("Reached sentence end time:", sentenceEndTimeRef.current, "current time:", currentAudioTime);
+        
+        // Mark as processed to prevent multiple callbacks
+        endEventProcessedRef.current = true;
+        
+        // Stop playback when we reach the end time
+        audioRef.current.pause();
+        setIsPlaying(false);
+        
+        // Call the onEnded callback to notify parent
+        if (onEnded) {
+          // Reset sentence end time
+          const prevEndTime = sentenceEndTimeRef.current;
+          sentenceEndTimeRef.current = null;
+          
+          // Small delay to ensure state is updated before callback
+          setTimeout(() => {
+            if (audioRef.current && Math.abs(audioRef.current.currentTime - prevEndTime) < 0.5) {
+              onEnded();
+            }
+          }, 50);
+        }
+      }
+    }
+  };
+  
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+      setIsLoaded(true);
+    }
+  };
+  
+  const handleAudioEnded = () => {
+    setIsPlaying(false);
+    
+    // Ensure playback is truly stopped
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    
+    if (onEnded) {
+      // Small delay to ensure state is updated before callback
+      setTimeout(() => {
+        onEnded();
+      }, 50);
+    }
+  };
+  
+  const handlePlayingState = () => {
+    const playing = audioRef.current && !audioRef.current.paused;
+    setIsPlaying(playing);
+    if (onPlayStateChange) onPlayStateChange(playing);
+  };
+  
+  return (
+    <div className="mobile-audio-player">
+      <audio
+        ref={audioRef}
+        src={audioSrc}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={handleAudioEnded}
+        onPlay={handlePlayingState}
+        onPause={handlePlayingState}
+        loop={false}
+      />
+      
+      <div className="mobile-player-container">
+        {/* Play/pause button */}
+        <button 
+          className="mobile-play-button" 
+          onClick={handlePlayPause}
+          disabled={!isLoaded}
+        >
+          {isPlaying ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="4" width="4" height="16" />
+              <rect x="14" y="4" width="4" height="16" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5,3 19,12 5,21" />
+            </svg>
+          )}
+        </button>
+        
+        {/* Speed control button */}
+        <button
+          className="mobile-playback-speed-button"
+          onClick={() => {
+            // Cycle through common playback speeds
+            const speeds = [0.75, 1.0, 1.25, 1.5];
+            const currentIndex = speeds.indexOf(playbackSpeed);
+            const nextIndex = (currentIndex + 1) % speeds.length;
+            setPlaybackSpeed(speeds[nextIndex]);
+            
+            if (audioRef.current) {
+              audioRef.current.playbackRate = speeds[nextIndex];
+            }
+          }}
+        >
+          {playbackSpeed}x
+        </button>
+        
+        {/* Cancel button */}
+        <button 
+          className="mobile-cancel-button"
+          onClick={() => { console.log('[MOBILE X BUTTON] Clicked'); if (typeof onCancel === 'function') { onCancel(); } }}
+          title="Stop Dictation and Show Results"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 6L6 18" />
+            <path d="M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      {/* Audio progress indicator (minimal) */}
+      <div className="mobile-progress-bar">
+        <div 
+          className="mobile-progress-fill" 
+          style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
+        ></div>
+      </div>
+    </div>
+  );
+});
+
+export default MobileAudioPlayer;

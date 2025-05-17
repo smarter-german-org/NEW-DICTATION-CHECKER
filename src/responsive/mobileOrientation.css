@@ -1,0 +1,24 @@
+/* 
+ * This file contains orientation-specific styling to hide/show UI elements
+ * based on the device orientation
+ */
+
+/* Hide timer and capitalization toggle in portrait mode only */
+@media (orientation: portrait) and (max-width: 768px) {
+  .timer,
+  .time-display,
+  .capitalization-toggle,
+  .option-toggle[title*="Case Sensitivity"] {
+    display: none !important;
+  }
+}
+
+/* Explicitly show timer and capitalization toggle in landscape mode */
+@media (orientation: landscape) and (max-width: 1024px) {
+  .timer,
+  .time-display,
+  .capitalization-toggle,
+  .option-toggle[title*="Case Sensitivity"] {
+    display: inline-flex !important;
+  }
+}

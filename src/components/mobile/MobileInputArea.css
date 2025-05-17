@@ -1,0 +1,54 @@
+/* Mobile-optimized styling for the dictation input area */
+@media (max-width: 768px) {
+  .dictation-input-area {
+    margin: 8px 0;
+    padding: 12px;
+    border-radius: 10px;
+    background-color: rgba(26, 26, 26, 0.7);
+    min-height: 60px;
+  }
+
+  .dictation-input {
+    font-size: 18px;
+    min-height: 60px;
+    padding: 8px 4px;
+    line-height: 24px;
+    color: var(--text-light);
+  }
+
+  .feedback-container {
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 10px;
+    max-height: none;
+    font-size: 16px;
+  }
+
+  .character-feedback {
+    font-size: 18px;
+    line-height: 26px;
+  }
+
+  /* Increase tap target size for mobile */
+  .action-buttons {
+    margin-top: 15px;
+    gap: 15px;
+  }
+
+  .next-button, 
+  .play-again-button {
+    padding: 14px 24px;
+    font-size: 16px;
+    min-width: 120px;
+    border-radius: 8px;
+  }
+}
+
+/* Prevent zoom on input focus for iOS */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="number"],
+  textarea {
+    font-size: 16px;
+  }
+}

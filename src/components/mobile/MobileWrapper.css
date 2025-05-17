@@ -1,0 +1,8 @@
+.mobile-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  /* Allow specific touch actions to pass through for buttons */
+  touch-action: pan-x pan-y;
+} 

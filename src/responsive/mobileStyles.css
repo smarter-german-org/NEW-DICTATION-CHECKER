@@ -1,0 +1,20 @@
+@media (max-width: 768px) {
+  .keyboard-shortcuts-info,
+  .shortcuts-panel,
+  .shortcuts-toggle,
+  .timer,
+  .time-display,
+  .option-toggle,
+  .playback-speed-button,
+  .control-button,
+  .next-button,
+  .restart-button,
+  .play-again-button,
+  .hint-button,
+  .capitalization-toggle,
+  .action-buttons button:not(.play-button):not(.start-button):not(.cancel-button),
+  .audio-controls button:not(.play-button):not(.start-button):not(.cancel-button),
+  .dictation-controls button:not(.play-button):not(.start-button):not(.cancel-button) {
+    display: none !important;
+  }
+} 

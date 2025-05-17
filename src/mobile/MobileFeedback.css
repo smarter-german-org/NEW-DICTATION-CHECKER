@@ -1,0 +1,70 @@
+/* Mobile-specific overrides for the feedback screen */
+@media (max-width: 768px) {
+  .dictation-feedback {
+    padding: 15px 10px;
+  }
+
+  .dictation-feedback h2 {
+    font-size: 22px;
+    margin-bottom: 15px;
+  }
+
+  .score-display {
+    margin: 15px 0;
+  }
+
+  .score-value {
+    font-size: 28px;
+    padding: 14px 16px;
+  }
+
+  .feedback-stats {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .stat-item {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .stat-title {
+    font-size: 14px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .stat-detail {
+    font-size: 14px;
+  }
+
+  .side-by-side-comparison {
+    flex-direction: column;
+  }
+
+  .comparison-column {
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  .text-container {
+    max-height: 200px;
+    font-size: 14px;
+  }
+
+  .restart-button {
+    padding: 12px 20px;
+    width: 100%;
+    font-size: 16px;
+    margin-top: 15px;
+  }
+
+  .word-tooltip {
+    min-width: 100px;
+    max-width: 200px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}

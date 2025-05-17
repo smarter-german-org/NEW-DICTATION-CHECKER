@@ -1,0 +1,79 @@
+@media (orientation: portrait) and (max-width: 767px) {
+  /* Hide timer display in portrait mode */
+  .audio-player .time-display {
+    display: none !important;
+  }
+  
+  /* Hide capitalization toggle button in portrait mode */
+  .option-toggle[title*="Case Sensitivity"],
+  .audio-controls .option-toggle[title*="Case Sensitivity"] {
+    display: none !important;
+  }
+  
+  /* Hide speed button in portrait mode - target all possible class names */
+  .speed-toggle,
+  .audio-controls .speed-toggle,
+  button[title*="Speed"],
+  .audio-player .speed-toggle {
+    display: none !important;
+  }
+  
+  /* Hide repeat button in portrait mode - target all possible class names */
+  .repeat-button,
+  .audio-controls .repeat-button,
+  button[title*="Repeat"],
+  .audio-player .repeat-button {
+    display: none !important;
+  }
+  
+  /* Hide speed button in portrait mode */
+  .playback-speed-button,
+  .audio-player .playback-speed-button {
+    display: none !important;
+  }
+  
+  /* Hide repeat button in portrait mode */
+  .option-toggle[title*="Repeat"],
+  .audio-player .option-toggle[title*="Repeat"] {
+    display: none !important;
+  }
+  
+  /* Ensure X button is visible and properly positioned */
+  .cancel-button,
+  .audio-player .cancel-button {
+    display: flex !important;
+    margin-left: auto;
+  }
+  
+  /* Adjust spacing for other buttons */
+  .controls-right,
+  .audio-player .controls-right {
+    justify-content: flex-end;
+  }
+}
+
+@media (orientation: landscape) {
+  /* Ensure timer and capitalization toggle are visible in landscape */
+  .audio-controls .time-display,
+  .audio-controls .capitalization-toggle {
+    display: flex !important;
+  }
+}
+
+/* Ensure proper display in landscape mode */
+@media (orientation: landscape) {
+  .audio-player .time-display,
+  .audio-player .option-toggle[title*="Case Sensitivity"],
+  .audio-player .speed-toggle,
+  .audio-player .repeat-button {
+    display: flex !important;
+  }
+  
+  /* Ensure all controls are visible in landscape */
+  .playback-speed-button,
+  .audio-player .playback-speed-button,
+  .option-toggle[title*="Repeat"],
+  .audio-player .option-toggle[title*="Repeat"] {
+    display: flex !important;
+  }
+}

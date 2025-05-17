@@ -1,0 +1,40 @@
+@media (orientation: portrait) and (max-width: 768px) {
+  .dictation-tool {
+    flex-direction: column;
+  }
+  
+  .audio-section {
+    width: 100%;
+  }
+  
+  .input-section {
+    width: 100%;
+  }
+  
+  /* Specific fixes for portrait mode */
+  .mobile-start-screen {
+    height: auto;
+    min-height: 70vh;
+    padding: 10vh 20px;
+  }
+  
+  .mobile-start-button-container {
+    margin-top: 40px;
+  }
+  
+  /* Ensure mobile wrapper adapts to portrait */
+  .mobile-wrapper,
+  .mobile-gesture-handler {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Hide timer and capitalization toggle in portrait mode only */
+  .timer,
+  .time-display,
+  .capitalization-toggle,
+  .option-toggle[title*="Case Sensitivity"] {
+    display: none !important;
+  }
+} 

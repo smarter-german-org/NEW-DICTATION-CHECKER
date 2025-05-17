@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import './DictationFeedback.css';
+import './mobile/MobileFeedback.css';
 import { 
   alignWords, 
   normalizeGermanText, 

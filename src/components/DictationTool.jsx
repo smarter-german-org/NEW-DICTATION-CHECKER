@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import AudioPlayer from './AudioPlayer';
 import ConfirmDialog from './ConfirmDialog';
 import DictationFeedback from './DictationFeedback';
@@ -13,6 +13,7 @@ import {
 } from '../utils/textUtils';
 import { debug } from '../utils/debug';
 import './DictationTool.css';
+import './mobile/MobileInputArea.css';
 
 // Character-level feedback component with improved word skipping
 const CharacterFeedback = ({ expected, actual, checkCapitalization = false }) => {
@@ -674,7 +675,7 @@ const SAMPLE_EXERCISES = [
   }
 ];
 
-const DictationTool = ({ exerciseId = 1 }) => {
+const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortcuts = false, audioPlayerOverride = null }, ref) => {
   // Find the selected exercise by ID or use the first one as default
   const defaultExercise = SAMPLE_EXERCISES.find(ex => ex.id === exerciseId) || SAMPLE_EXERCISES[0];
   const [selectedExercise, setSelectedExercise] = useState(defaultExercise);
@@ -1617,40 +1618,43 @@ const DictationTool = ({ exerciseId = 1 }) => {
         onCancel={closeConfirmDialog}
       />
       
-      <div className="keyboard-shortcuts-info">
-        <button 
-          className="shortcuts-toggle"
-          onClick={toggleShortcutsPanel}
-        >
-          Keyboard Shortcuts
-        </button>
-        <div className={`shortcuts-panel ${showShortcuts ? 'show' : ''}`}>
-          <div className="shortcut-row">
-            <div className="shortcut-keys">
-              <kbd>{modifierKeySymbol}</kbd> + <kbd>Enter</kbd>
+      {/* Only show shortcuts panel on desktop */}
+      {!hideShortcuts && (
+        <div className="keyboard-shortcuts-info">
+          <button 
+            className="shortcuts-toggle"
+            onClick={toggleShortcutsPanel}
+          >
+            Keyboard Shortcuts
+          </button>
+          <div className={`shortcuts-panel ${showShortcuts ? 'show' : ''}`}>
+            <div className="shortcut-row">
+              <div className="shortcut-keys">
+                <kbd>{modifierKeySymbol}</kbd> + <kbd>Enter</kbd>
+              </div>
+              <div className="shortcut-description">: Play/Pause</div>
             </div>
-            <div className="shortcut-description">: Play/Pause</div>
-          </div>
-          <div className="shortcut-row">
-            <div className="shortcut-keys">
-              <kbd>{modifierKeySymbol}</kbd> + <kbd>←</kbd>
+            <div className="shortcut-row">
+              <div className="shortcut-keys">
+                <kbd>{modifierKeySymbol}</kbd> + <kbd>←</kbd>
+              </div>
+              <div className="shortcut-description">: Previous sentence</div>
             </div>
-            <div className="shortcut-description">: Previous sentence</div>
-          </div>
-          <div className="shortcut-row">
-            <div className="shortcut-keys">
-              <kbd>{modifierKeySymbol}</kbd> + <kbd>→</kbd>
+            <div className="shortcut-row">
+              <div className="shortcut-keys">
+                <kbd>{modifierKeySymbol}</kbd> + <kbd>→</kbd>
+              </div>
+              <div className="shortcut-description">: Next sentence</div>
             </div>
-            <div className="shortcut-description">: Next sentence</div>
-          </div>
-          <div className="shortcut-row">
-            <div className="shortcut-keys">
-              <kbd>{modifierKeySymbol}</kbd> + <kbd>↑</kbd>
+            <div className="shortcut-row">
+              <div className="shortcut-keys">
+                <kbd>{modifierKeySymbol}</kbd> + <kbd>↑</kbd>
+              </div>
+              <div className="shortcut-description">: Repeat sentence</div>
             </div>
-            <div className="shortcut-description">: Repeat sentence</div>
           </div>
         </div>
-      </div>
+      )}
       
       {!isExerciseCompleted ? (
         <div className="input-section">
@@ -1695,6 +1699,6 @@ const DictationTool = ({ exerciseId = 1 }) => {
       ) : null}
     </div>
   );
-};
+});
 
 export default DictationTool;
