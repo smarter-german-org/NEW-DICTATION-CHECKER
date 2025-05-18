@@ -2,9 +2,9 @@
 # Script to deploy dictation checker to GitHub Pages
 
 # Set these variables
-REPO_URL="YOUR_GITHUB_REPO_URL_HERE" # Example: https://github.com/yourusername/dictation-checker.git
-USERNAME="YOUR_GITHUB_USERNAME"
-REPO_NAME="dictation-checker"
+REPO_URL="https://github.com/smarter-german-org/NEW-DICTATION-CHECKER.git"
+USERNAME="smarter-german-org"
+REPO_NAME="NEW-DICTATION-CHECKER"
 
 # Check if the dist directory exists
 if [ ! -d "dist" ]; then
@@ -18,8 +18,18 @@ echo "Preparing to deploy to GitHub Pages..."
 TEMP_DIR=$(mktemp -d)
 echo "Created temp directory: $TEMP_DIR"
 
+# Create .nojekyll file to prevent GitHub from ignoring files that begin with an underscore
+touch dist/.nojekyll
+
+# Make sure teachable-integration.js is copied to the dist folder
+if [ -f "public/teachable-integration.js" ]; then
+    echo "Copying teachable-integration.js to dist/"
+    cp public/teachable-integration.js dist/
+fi
+
 # Copy the dist contents to the temp directory
 cp -r dist/* "$TEMP_DIR"
+cp -r dist/.nojekyll "$TEMP_DIR"
 
 # Navigate to the temp directory
 cd "$TEMP_DIR" || exit
@@ -36,11 +46,7 @@ if [ -z "$REPO_URL" ] || [ "$REPO_URL" = "YOUR_GITHUB_REPO_URL_HERE" ]; then
 fi
 
 git remote add origin "$REPO_URL"
-git branch -M main
-git push -f origin main
-
-# Create gh-pages branch and push
-git checkout -b gh-pages
+git branch -M gh-pages
 git push -f origin gh-pages
 
 echo "Deployed to GitHub Pages successfully!"

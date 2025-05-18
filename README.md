@@ -1,6 +1,6 @@
 # Dictation Checker
 
-A beautiful and interactive tool for practicing dictation skills. Listen to audio clips and type what you hear to improve your listening and typing skills. Designed to be integrated with Teachable.
+A beautiful and interactive tool for practicing dictation skills. Listen to audio clips and type what you hear to improve your listening and typing skills. Specially designed for integration with Teachable courses.
 
 ## Features
 
@@ -9,7 +9,9 @@ A beautiful and interactive tool for practicing dictation skills. Listen to audi
 - Real-time word-by-word comparison of your input with the expected text
 - Visual feedback on correct and incorrect words
 - Mistake counter to track your progress
-- Ready for Teachable integration
+- Mobile-responsive design for all devices
+- Complete Teachable integration system for multiple courses
+- Support for VTT files to define dictation content and timing
 
 ## Getting Started
 
@@ -43,27 +45,58 @@ A beautiful and interactive tool for practicing dictation skills. Listen to audi
 
 ## Integration with Teachable
 
-The DictationTool component is designed to receive an `exerciseId` prop that determines which exercise to display:
+This app has been specifically designed for integration with Teachable courses, allowing you to add dictation exercises to any lesson.
 
-```jsx
-<DictationTool exerciseId={1} />
+### Quick Teachable Integration Steps
+
+1. Build the app for deployment:
+   ```
+   ./build-embedded.sh
+   ```
+
+2. Upload the `dist` folder to your WordPress site at `wp-content/uploads/dictation-app/`
+
+3. Add this code to your Teachable lesson (HTML editor):
+   ```html
+   <div class="dictation-app-container" 
+        data-course-id="1" 
+        data-lesson-id="3" 
+        data-audio-url="https://yoursite.com/wp-content/uploads/dictation-app/courses/course1/lesson3/audio.mp3"
+        data-vtt-url="https://yoursite.com/wp-content/uploads/dictation-app/courses/course1/lesson3/audio.vtt">
+   </div>
+   
+   <script src="https://yoursite.com/wp-content/uploads/dictation-app/teachable-integration.js"></script>
+   ```
+
+### Generate Teachable Code
+
+Use the included utility to generate the exact code for each lesson:
+
+```
+node generate-teachable-code.js
 ```
 
-For Teachable integration, this ID can be passed from your Teachable course to load specific exercises.
+### Complete Integration Guide
+
+For detailed instructions on setting up all your courses and lessons, see the [Teachable Integration Guide](docs/TEACHABLE-INTEGRATION.md).
 
 ## Adding Custom Dictation Exercises
 
-To add your own dictation exercises, modify the `SAMPLE_EXERCISES` array in `src/components/DictationTool.jsx`. Each exercise should have the following structure:
+For local development, you can add exercises by modifying the `SAMPLE_EXERCISES` array in `src/components/DictationTool.jsx`:
 
 ```javascript
 {
-  id: 4, // Unique ID to be passed from Teachable
+  id: 4,
   title: "Your Exercise Title",
-  audio: "/path/to/audio/file.mp3", // Place audio files in the public/audio directory
-  text: "The exact text of the dictation exercise",
-  level: "Beginner" // Difficulty level
+  audio: "/path/to/audio/file.mp3",
+  sentences: [
+    { id: 0, text: "First sentence.", startTime: 0, endTime: 3.5 },
+    { id: 1, text: "Second sentence.", startTime: 4, endTime: 7.2 },
+  ]
 }
 ```
+
+For Teachable integration, use VTT files to define your dictation content and timing.
 
 ## License
 
