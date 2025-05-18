@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teachable Integration Script Tester</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #ff5500;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        code {
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 15px;
+        }
+        button {
+            background: #ff5500;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #e04b00;
+        }
+        #debug-log {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            font-family: monospace;
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teachable Integration Script Tester</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Your Integration Script URL</h2>
+        <p>Enter the Dropbox URL of your teachable-integration.js file:</p>
+        <input type="text" id="script-url" value="https://www.dropbox.com/s/your-file-path/teachable-integration.js?dl=0" />
+        <button id="test-script-btn">Test Script URL</button>
+        <div id="script-result" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test Audio & VTT URLs</h2>
+        <p>Enter the Dropbox URL of a test audio file:</p>
+        <input type="text" id="audio-url" value="https://www.dropbox.com/s/your-file-path/audio.mp3?dl=0" />
+        
+        <p>Enter the Dropbox URL of a test VTT file:</p>
+        <input type="text" id="vtt-url" value="https://www.dropbox.com/s/your-file-path/subtitles.vtt?dl=0" />
+        
+        <button id="test-media-btn">Test Media URLs</button>
+        <div id="media-result" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Generate Test Embed Code</h2>
+        <button id="generate-btn">Generate Embed Code</button>
+        <div id="embed-result" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Debug Log</h2>
+        <div id="debug-log"></div>
+    </div>
+
+    <script>
+        // Debug logging
+        function log(message) {
+            const logDiv = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        // Format Dropbox URL function (from your code)
+        function formatDropboxUrl(url) {
+            log(`Formatting URL: ${url}`);
+            
+            // Check if URL is empty or invalid
+            if (!url || url.trim() === '') {
+                log("Warning: Empty URL provided to formatDropboxUrl");
+                return '';
+            }
+            
+            // Check if URL is a valid URL format
+            try {
+                new URL(url);
+            } catch(e) {
+                log(`Error: Invalid URL format: ${url}, ${e.message}`);
+                return url; // Return original to prevent further issues
+            }
+            
+            // Replace www.dropbox.com with dl.dropboxusercontent.com
+            let formattedUrl = url.replace('www.dropbox.com', 'dl.dropboxusercontent.com');
+            log(`After domain replacement: ${formattedUrl}`);
+            
+            // Replace dl=0 with raw=1
+            formattedUrl = formattedUrl.replace('dl=0', 'raw=1');
+            log(`After dl=0 replacement: ${formattedUrl}`);
+            
+            // Add raw=1 if it's not there
+            if (!formattedUrl.includes('?')) {
+                formattedUrl += '?raw=1';
+            } else if (!formattedUrl.includes('raw=1')) {
+                formattedUrl += '&raw=1';
+            }
+            
+            log(`Final formatted URL: ${formattedUrl}`);
+            return formattedUrl;
+        }
+
+        // Generate embed code
+        function generateEmbedCode(courseLevel, lessonId, integrationUrl, audioUrl, vttUrl) {
+            log(`Generating embed code with integration URL: ${integrationUrl}`);
+            
+            // Using concatenation instead of template literals to avoid JavaScript parsing issues
+            return "<!-- Dictation Exercise - Course " + courseLevel + ", Lesson " + lessonId + " -->\n" +
+                "<div class=\"dictation-app-container\" \n" +
+                "     data-course-id=\"" + courseLevel + "\" \n" +
+                "     data-lesson-id=\"" + lessonId + "\" \n" +
+                "     data-audio-url=\"" + audioUrl + "\"\n" +
+                "     data-vtt-url=\"" + vttUrl + "\">\n" +
+                "</div>\n" +
+                "\n" +
+                "<!-- Teachable Integration Script -->\n" +
+                "<script src=\"" + integrationUrl + "\"><\/script>";
+        }
+
+        // Test loading a script
+        function testScriptUrl() {
+            const scriptUrlInput = document.getElementById('script-url');
+            const resultDiv = document.getElementById('script-result');
+            
+            const originalUrl = scriptUrlInput.value.trim();
+            
+            if (!originalUrl) {
+                resultDiv.innerHTML = `<div class="error">Please enter a URL</div>`;
+                return;
+            }
+            
+            log(`Testing script URL: ${originalUrl}`);
+            const formattedUrl = formatDropboxUrl(originalUrl);
+            
+            resultDiv.innerHTML = `
+                <p><strong>Original URL:</strong> ${originalUrl}</p>
+                <p><strong>Formatted URL:</strong> ${formattedUrl}</p>
+                <p><strong>Testing script load...</strong></p>
+            `;
+            
+            // Create a script element to test loading
+            const script = document.createElement('script');
+            script.src = formattedUrl;
+            script.dataset.testScript = 'true';
+            
+            script.onload = function() {
+                log("Script loaded successfully!");
+                resultDiv.innerHTML += `<div class="success">Script loaded successfully!</div>`;
+            };
+            
+            script.onerror = function() {
+                log("Error loading script");
+                resultDiv.innerHTML += `
+                    <div class="error">
+                        Error loading script. Possible causes:
+                        <ul>
+                            <li>The script URL is incorrect</li>
+                            <li>CORS restrictions are blocking the script</li>
+                            <li>The file doesn't exist or isn't publicly accessible</li>
+                        </ul>
+                        Try uploading your script to a different host (GitHub Pages, etc.)
+                    </div>
+                `;
+            };
+            
+            document.body.appendChild(script);
+        }
+
+        // Test media URLs
+        function testMediaUrls() {
+            const audioUrlInput = document.getElementById('audio-url');
+            const vttUrlInput = document.getElementById('vtt-url');
+            const resultDiv = document.getElementById('media-result');
+            
+            const originalAudioUrl = audioUrlInput.value.trim();
+            const originalVttUrl = vttUrlInput.value.trim();
+            
+            if (!originalAudioUrl || !originalVttUrl) {
+                resultDiv.innerHTML = `<div class="error">Please enter both URLs</div>`;
+                return;
+            }
+            
+            log(`Testing audio URL: ${originalAudioUrl}`);
+            log(`Testing VTT URL: ${originalVttUrl}`);
+            
+            const formattedAudioUrl = formatDropboxUrl(originalAudioUrl);
+            const formattedVttUrl = formatDropboxUrl(originalVttUrl);
+            
+            resultDiv.innerHTML = `
+                <h3>Audio URL</h3>
+                <p><strong>Original:</strong> ${originalAudioUrl}</p>
+                <p><strong>Formatted:</strong> ${formattedAudioUrl}</p>
+                
+                <h3>VTT URL</h3>
+                <p><strong>Original:</strong> ${originalVttUrl}</p>
+                <p><strong>Formatted:</strong> ${formattedVttUrl}</p>
+                
+                <h3>Testing audio load...</h3>
+                <audio id="test-audio" controls style="width:100%">
+                    <source src="${formattedAudioUrl}" type="audio/mpeg">
+                </audio>
+                
+                <h3>Testing VTT load...</h3>
+                <p>(This just checks if the file exists but doesn't display subtitles)</p>
+            `;
+            
+            // Test audio
+            const audio = document.getElementById('test-audio');
+            
+            audio.onloadeddata = function() {
+                log("Audio loaded successfully!");
+                resultDiv.innerHTML += `<div class="success">Audio loaded successfully!</div>`;
+            };
+            
+            audio.onerror = function() {
+                log("Error loading audio");
+                resultDiv.innerHTML += `
+                    <div class="error">
+                        Error loading audio file. Check that the URL is correct and publicly accessible.
+                    </div>
+                `;
+            };
+            
+            // Test VTT
+            fetch(formattedVttUrl)
+                .then(response => {
+                    if (response.ok) {
+                        log("VTT file accessible");
+                        resultDiv.innerHTML += `<div class="success">VTT file accessible!</div>`;
+                        return response.text();
+                    }
+                    throw new Error('Network response was not ok');
+                })
+                .then(text => {
+                    log(`VTT content preview: ${text.substring(0, 100)}...`);
+                })
+                .catch(error => {
+                    log(`Error loading VTT: ${error.message}`);
+                    resultDiv.innerHTML += `
+                        <div class="error">
+                            Error loading VTT file. Check that the URL is correct and publicly accessible.
+                        </div>
+                    `;
+                });
+        }
+
+        // Generate test embed code
+        function generateTestEmbed() {
+            const scriptUrl = formatDropboxUrl(document.getElementById('script-url').value.trim());
+            const audioUrl = formatDropboxUrl(document.getElementById('audio-url').value.trim());
+            const vttUrl = formatDropboxUrl(document.getElementById('vtt-url').value.trim());
+            const resultDiv = document.getElementById('embed-result');
+            
+            if (!scriptUrl || !audioUrl || !vttUrl) {
+                resultDiv.innerHTML = `<div class="error">Please enter all URLs first</div>`;
+                return;
+            }
+            
+            const embedCode = generateEmbedCode('A1', 'L01', scriptUrl, audioUrl, vttUrl);
+            
+            resultDiv.innerHTML = `
+                <h3>Generated Embed Code:</h3>
+                <pre style="background:#f5f5f5;padding:10px;overflow-x:auto;">${embedCode.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+                
+                <h3>Live Preview:</h3>
+                <div style="border:1px solid #ccc;padding:15px;margin-top:10px;">
+                    <div class="dictation-app-container" 
+                        data-course-id="A1" 
+                        data-lesson-id="L01" 
+                        data-audio-url="${audioUrl}"
+                        data-vtt-url="${vttUrl}">
+                    </div>
+                    
+                    <!-- The script is loaded separately to avoid potential issues -->
+                    <button id="load-preview-btn">Load Preview Script</button>
+                </div>
+            `;
+            
+            document.getElementById('load-preview-btn').addEventListener('click', function() {
+                this.disabled = true;
+                this.textContent = 'Loading...';
+                
+                const script = document.createElement('script');
+                script.src = scriptUrl;
+                
+                script.onload = () => {
+                    log("Preview script loaded successfully!");
+                    this.textContent = 'Script Loaded Successfully';
+                    this.style.backgroundColor = '#4caf50';
+                };
+                
+                script.onerror = () => {
+                    log("Error loading preview script");
+                    this.textContent = 'Error Loading Script';
+                    this.style.backgroundColor = '#f44336';
+                };
+                
+                document.body.appendChild(script);
+            });
+        }
+
+        // Set up event handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('test-script-btn').addEventListener('click', testScriptUrl);
+            document.getElementById('test-media-btn').addEventListener('click', testMediaUrls);
+            document.getElementById('generate-btn').addEventListener('click', generateTestEmbed);
+            
+            log("Script Tester loaded and ready");
+        });
+    </script>
+</body>
+</html>

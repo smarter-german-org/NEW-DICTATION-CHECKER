@@ -11,5 +11,27 @@ export default defineConfig({
     port: 5173,      // Default port
     strictPort: true,
     open: true,      // Automatically open in browser
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    // Generate source maps for easier debugging
+    sourcemap: true,
+    // Optimize build size
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: false, // Keep console logs
+      },
+    },
+    // Optimize chunks for embedding
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          utils: ['./src/utils/textUtils.js', './src/utils/debug.js']
+        }
+      }
+    }
   }
 }) 

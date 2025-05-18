@@ -1,7 +1,7 @@
 import React, { forwardRef, useImperativeHandle, useRef } from 'react';
 import DictationTool from './DictationTool';
 
-const DictationToolWithRef = forwardRef((props, ref) => {
+const DictationToolWithRef = forwardRef(({ customExercise, ...props }, ref) => {
   const dictationToolRef = useRef(null);
   
   // Expose methods to parent components through ref
@@ -111,7 +111,7 @@ const DictationToolWithRef = forwardRef((props, ref) => {
     }
   }));
 
-  return <DictationTool {...props} ref={dictationToolRef} />;
+  return <DictationTool {...props} customExercise={customExercise} ref={dictationToolRef} />;
 });
 
 export default DictationToolWithRef;

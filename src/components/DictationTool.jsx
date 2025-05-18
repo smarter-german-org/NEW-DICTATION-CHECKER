@@ -675,7 +675,7 @@ const SAMPLE_EXERCISES = [
   }
 ];
 
-const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortcuts = false, audioPlayerOverride = null }, ref) => {
+const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortcuts = false, audioPlayerOverride = null, customExercise = null }, ref) => {
   // Find the selected exercise by ID or use the first one as default
   const defaultExercise = SAMPLE_EXERCISES.find(ex => ex.id === exerciseId) || SAMPLE_EXERCISES[0];
   const [selectedExercise, setSelectedExercise] = useState(defaultExercise);
@@ -734,11 +734,18 @@ const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortc
     setIsMac(isMacPlatform);
   }, []);
 
-  // Update exercise if exerciseId prop changes
+  // Update exercise if exerciseId prop changes or a customExercise is provided
   useEffect(() => {
-    const exercise = SAMPLE_EXERCISES.find(ex => ex.id === exerciseId) || SAMPLE_EXERCISES[0];
-    setSelectedExercise(exercise);
-  }, [exerciseId]);
+    if (customExercise) {
+      // If a custom exercise is provided (embedded mode), use it
+      debug('USING_CUSTOM_EXERCISE', customExercise);
+      setSelectedExercise(customExercise);
+    } else {
+      // Otherwise, use the sample exercise based on ID
+      const exercise = SAMPLE_EXERCISES.find(ex => ex.id === exerciseId) || SAMPLE_EXERCISES[0];
+      setSelectedExercise(exercise);
+    }
+  }, [exerciseId, customExercise]);
 
   // Load VTT file and extract sentences with timing when exercise changes
   useEffect(() => {
