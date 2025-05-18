@@ -21,15 +21,28 @@
  */
 
 (function() {
-  // Automatically detect the app location from the script source
+  // Automatically detect the app location from the script source or use GitHub Pages URL
   const appBaseUrl = (function() {
-    // Get the current script tag
-    const scripts = document.getElementsByTagName('script');
-    const currentScript = scripts[scripts.length - 1];
-    const scriptSrc = currentScript.src;
+    try {
+      // Get the current script tag
+      const scripts = document.getElementsByTagName('script');
+      const currentScript = scripts[scripts.length - 1];
+      const scriptSrc = currentScript.src;
+      
+      // Extract the base URL from the script source
+      const autoDetectedUrl = scriptSrc.substring(0, scriptSrc.lastIndexOf('/'));
+      
+      // If autodetection works, use that URL
+      if (autoDetectedUrl && autoDetectedUrl.length > 0) {
+        console.log('Dictation App: Using auto-detected URL:', autoDetectedUrl);
+        return autoDetectedUrl;
+      }
+    } catch (e) {
+      console.warn('Dictation App: Auto-detection failed, using default GitHub Pages URL');
+    }
     
-    // Extract the base URL from the script source
-    return scriptSrc.substring(0, scriptSrc.lastIndexOf('/'));
+    // Fallback to GitHub Pages URL if auto-detection fails
+    return 'https://smarter-german-org.github.io/NEW-DICTATION-CHECKER';
   })();
   
   // Wait for DOM to be fully loaded
