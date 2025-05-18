@@ -6,6 +6,7 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: '/NEW-DICTATION-CHECKER/', // Base path for GitHub Pages
   server: {
     host: '0.0.0.0', // Listen on all local IPs to allow access from within the network
     port: 5173,      // Default port

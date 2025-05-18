@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Integration Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #0366d6;
+        }
+        .container {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dictation Checker - Local Integration Test</h1>
+    
+    <div class="container">
+        <h2>Test with Local Audio/VTT Files</h2>
+        <!-- Dictation Exercise Container -->
+        <div class="dictation-app-container" 
+             data-course-id="TestCourse" 
+             data-lesson-id="L01" 
+             data-audio-url="http://localhost:4173/audio/chap01.mp3"
+             data-vtt-url="http://localhost:4173/audio/chap01.vtt">
+        </div>
+    </div>
+    
+    <!-- Load the local integration script -->
+    <script src="http://localhost:4173/teachable-integration.js"></script>
+</body>
+</html>
