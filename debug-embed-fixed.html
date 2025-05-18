@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Embed (Fixed)</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        pre { background: #f5f5f5; padding: 15px; overflow: auto; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Dictation Checker Embed Debug (Fixed)</h1>
+    
+    <div id="status">Testing integration...</div>
+    
+    <h2>Results</h2>
+    <pre id="results"></pre>
+    
+    <script>
+        const statusEl = document.getElementById('status');
+        const resultsEl = document.getElementById('results');
+        
+        function log(message, isError = false) {
+            const line = document.createElement('div');
+            line.textContent = message;
+            if (isError) line.className = 'error';
+            resultsEl.appendChild(line);
+        }
+        
+        async function testUrl(url) {
+            try {
+                log(`Testing: ${url}`);
+                const response = await fetch(url, { method: 'HEAD' });
+                log(`Status: ${response.status} ${response.statusText}`, response.status >= 400);
+                return response.ok;
+            } catch (error) {
+                log(`Error: ${error.message}`, true);
+                return false;
+            }
+        }
+        
+        async function runTests() {
+            const baseUrl = 'https://smarter-german-org.github.io/NEW-DICTATION-CHECKER';
+            const urlsToTest = [
+                `${baseUrl}/embed.html`,
+                `${baseUrl}/teachable-integration.js`,
+                `${baseUrl}/mobile-detection.js`,
+                `${baseUrl}/assets/main-9993b2de.js`,
+                `${baseUrl}/assets/vendor-fa18274d.js`,
+                `${baseUrl}/assets/utils-a8c242c4.js`
+            ];
+            
+            let allPassed = true;
+            for (const url of urlsToTest) {
+                const passed = await testUrl(url);
+                if (!passed) allPassed = false;
+            }
+            
+            // Check if any HTML is trying to reference src/main.jsx
+            try {
+                log(`Checking embed.html for src/main.jsx references...`);
+                const response = await fetch(`${baseUrl}/embed.html`);
+                const html = await response.text();
+                const hasSrcMainJsxRef = html.includes('src/main.jsx');
+                if (hasSrcMainJsxRef) {
+                    log(`Error: embed.html still contains a reference to src/main.jsx!`, true);
+                    allPassed = false;
+                } else {
+                    log(`Success: No reference to src/main.jsx found in embed.html`);
+                }
+            } catch (error) {
+                log(`Error checking for src/main.jsx references: ${error.message}`, true);
+                allPassed = false;
+            }
+            
+            statusEl.textContent = allPassed ? 
+                'All tests passed! The integration should work.' :
+                'Some tests failed. Check the results for details.';
+            statusEl.className = allPassed ? 'success' : 'error';
+        }
+        
+        runTests();
+    </script>
+</body>
+</html>
