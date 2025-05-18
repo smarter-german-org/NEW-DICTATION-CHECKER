@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integration Test Summary</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 { 
+            color: #0366d6;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 10px;
+        }
+        h2 {
+            margin-top: 30px;
+            color: #24292e;
+        }
+        .container {
+            background-color: #f6f8fa;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .success {
+            border-left: 4px solid #2cbe4e;
+        }
+        .warning {
+            border-left: 4px solid #f1e05a;
+        }
+        .error {
+            border-left: 4px solid #d73a49;
+        }
+        code {
+            background-color: rgba(27,31,35,0.05);
+            border-radius: 3px;
+            font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 85%;
+            padding: 0.2em 0.4em;
+        }
+        pre {
+            background-color: #f6f8fa;
+            border-radius: 6px;
+            font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 85%;
+            line-height: 1.45;
+            overflow: auto;
+            padding: 16px;
+        }
+        a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dictation App Integration Results</h1>
+    
+    <div class="container success">
+        <h2>✅ Integration Successful!</h2>
+        <p>The Teachable Embed Generator has been updated to use GitHub Pages as the default integration script URL. The deployment process has been improved for better reliability.</p>
+    </div>
+    
+    <h2>Testing Summary</h2>
+    <p>We've created several test files to verify integration works correctly:</p>
+    <ul>
+        <li><a href="local-integration-test.html">Local Integration Test</a> - For testing with a local development server</li>
+        <li><a href="github-pages-test.html">GitHub Pages Integration Test</a> - For testing with GitHub Pages deployment</li>
+        <li><a href="teachable-simulation.html">Teachable Course Simulation</a> - Mimics how the script will appear in Teachable</li>
+    </ul>
+    
+    <h2>Integration Changes</h2>
+    <div class="container">
+        <p><strong>Key improvements:</strong></p>
+        <ul>
+            <li>Added proper GitHub Pages base path (<code>/NEW-DICTATION-CHECKER/</code>) to Vite config</li>
+            <li>Ensured <code>teachable-integration.js</code> is properly copied to the build directory</li>
+            <li>Fixed deployment script to properly deploy to gh-pages branch</li>
+            <li>Added <code>.nojekyll</code> file to ensure GitHub Pages doesn't ignore underscored files</li>
+        </ul>
+    </div>
+    
+    <h2>How to Use</h2>
+    <div class="container">
+        <p>To generate embed codes for Teachable lessons:</p>
+        <ol>
+            <li>Open <code>teachable-embed-generator-clean.html</code> in your browser</li>
+            <li>Fill in the course level and lesson number</li>
+            <li>Keep the default GitHub Pages integration URL</li>
+            <li>Add your audio and VTT file URLs (they can be hosted on Dropbox)</li>
+            <li>Click "Generate Code" and copy the generated code into your Teachable lesson</li>
+        </ol>
+    </div>
+    
+    <h2>Embed Code Example</h2>
+    <div class="container">
+        <pre><code>&lt;!-- Dictation Exercise - Course A1, Lesson L01 --&gt;
+&lt;div class="dictation-app-container" 
+     data-course-id="A1" 
+     data-lesson-id="L01" 
+     data-audio-url="https://dl.dropboxusercontent.com/s/your-file-path/audio.mp3?raw=1"
+     data-vtt-url="https://dl.dropboxusercontent.com/s/your-file-path/audio.vtt?raw=1"&gt;
+&lt;/div&gt;
+
+&lt;!-- Teachable Integration Script --&gt;
+&lt;script src="https://smarter-german-org.github.io/NEW-DICTATION-CHECKER/teachable-integration.js"&gt;&lt;/script&gt;</code></pre>
+    </div>
+    
+    <h2>Troubleshooting</h2>
+    <div class="container warning">
+        <p>If you encounter issues with the integration:</p>
+        <ol>
+            <li>Make sure your audio and VTT files are properly shared (with <code>raw=1</code> parameter if using Dropbox)</li>
+            <li>Check browser console for any error messages</li>
+            <li>Verify that GitHub Pages deployment is working by visiting <a href="https://smarter-german-org.github.io/NEW-DICTATION-CHECKER/" target="_blank">https://smarter-german-org.github.io/NEW-DICTATION-CHECKER/</a></li>
+            <li>If needed, refer to the <a href="docs/TROUBLESHOOTING-TEACHABLE-INTEGRATION.md">troubleshooting guide</a></li>
+        </ol>
+    </div>
+
+    <script>
+        // Document.ready equivalent
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Integration test page loaded successfully!');
+        });
+    </script>
+    </div>
+</body>
+</html>
