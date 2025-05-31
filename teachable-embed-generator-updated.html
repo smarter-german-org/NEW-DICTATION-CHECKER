@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dictation Checker - Teachable Embed Generator</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fafafa;
+    }
+    h1 {
+      color: #ff5500;
+      margin-bottom: 10px;
+    }
+    h2 {
+      color: #444;
+      margin-top: 30px;
+      margin-bottom: 15px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    input[type="text"], 
+    input[type="url"],
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 16px;
+      margin-bottom: 5px;
+    }
+    input[type="text"]:focus, 
+    input[type="url"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #ff5500;
+      box-shadow: 0 0 0 3px rgba(255, 85, 0, 0.1);
+    }
+    .help-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    button {
+      background-color: #ff5500;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #e64a00;
+    }
+    .output {
+      margin-top: 30px;
+      background-color: #fff;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .copy-btn {
+      background-color: #4CAF50;
+      font-size: 14px;
+      padding: 5px 10px;
+    }
+    .copy-btn:hover {
+      background-color: #3e8e41;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-family: monospace;
+      margin: 0;
+      max-height: 400px;
+      white-space: pre-wrap;
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      margin-right: 5px;
+    }
+    .tab.active {
+      background-color: white;
+      border-color: #ddd;
+      color: #ff5500;
+      font-weight: bold;
+    }
+    .info-box {
+      background-color: #e3f2fd;
+      border-left: 4px solid #2196F3;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .warning {
+      background-color: #fff8f0;
+      border-left: 4px solid #ff9800;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .error {
+      color: #b71c1c;
+      font-weight: bold;
+    }
+    .success {
+      color: #2e7d32;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Dictation Checker Teachable Integration</h1>
+  <p>Use this tool to generate the HTML code for embedding the Dictation Checker in your Teachable courses.</p>
+  
+  <div class="info-box">
+    <strong>Note:</strong> This generator creates a fixed embed code pointing to the latest version of the Dictation Checker tool.
+    No need to update your embed code when the tool is updated!
+  </div>
+
+  <h2>Step 1: Input Your Exercise Details</h2>
+  <div class="form-group">
+    <label for="course-id">Course ID (e.g., A1, B2, C1)</label>
+    <input type="text" id="course-id" placeholder="A1">
+    <div class="help-text">Optional identifier for your course</div>
+  </div>
+  
+  <div class="form-group">
+    <label for="lesson-id">Lesson ID (e.g., L01, L15)</label>
+    <input type="text" id="lesson-id" placeholder="L01">
+    <div class="help-text">Optional identifier for this specific lesson</div>
+  </div>
+  
+  <div class="form-group">
+    <label for="audio-url">Audio URL (Dropbox or direct link)</label>
+    <input type="url" id="audio-url" placeholder="https://dl.dropboxusercontent.com/scl/fi/..." required>
+    <div class="help-text">Link to your audio file (MP3 format recommended). If using Dropbox, add "?raw=1" at the end.</div>
+  </div>
+  
+  <div class="form-group">
+    <label for="vtt-url">VTT File URL (Dropbox or direct link)</label>
+    <input type="url" id="vtt-url" placeholder="https://dl.dropboxusercontent.com/scl/fi/..." required>
+    <div class="help-text">Link to your VTT file with transcription data. If using Dropbox, add "?raw=1" at the end.</div>
+  </div>
+  
+  <div class="form-group">
+    <label for="integration-version">Integration Version</label>
+    <select id="integration-version">
+      <option value="standard" selected>Standard (Reliable)</option>
+      <option value="enhanced">Enhanced (Better Height Adjustment)</option>
+      <option value="direct">Direct Embed (No Script)</option>
+    </select>
+    <div class="help-text">Choose the integration method. Enhanced version has better height adjustment but requires more testing.</div>
+  </div>
+  
+  <button id="generate-btn">Generate Embed Code</button>
+  
+  <div class="output" id="output-section" style="display: none;">
+    <div class="output-header">
+      <h2>Your Embed Code</h2>
+      <button class="copy-btn" id="copy-btn">Copy to Clipboard</button>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-tab="embed-code">Embed Code</div>
+      <div class="tab" data-tab="preview">Preview</div>
+    </div>
+    <div id="embed-code-tab">
+      <pre id="code-output"></pre>
+    </div>
+    <div id="preview-tab" style="display: none;">
+      <div id="preview-container"></div>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const generateBtn = document.getElementById('generate-btn');
+      const copyBtn = document.getElementById('copy-btn');
+      const outputSection = document.getElementById('output-section');
+      const codeOutput = document.getElementById('code-output');
+      const previewContainer = document.getElementById('preview-container');
+      const tabs = document.querySelectorAll('.tab');
+      
+      // Format Dropbox URL helper function
+      function formatDropboxUrl(url) {
+        if (!url) return '';
+        
+        // If it's already a dl.dropboxusercontent.com URL
+        if (url.includes('dl.dropboxusercontent.com')) {
+          // Make sure it has the raw parameter
+          return url.includes('?raw=1') ? url : `${url}${url.includes('?') ? '&' : '?'}raw=1`;
+        }
+        
+        // Convert from www.dropbox.com to dl.dropboxusercontent.com
+        if (url.includes('www.dropbox.com')) {
+          return url
+            .replace('www.dropbox.com', 'dl.dropboxusercontent.com')
+            .replace('?dl=0', '?raw=1')
+            .replace('?dl=1', '?raw=1');
+        }
+        
+        return url;
+      }
+      
+      // Generate embed code
+      generateBtn.addEventListener('click', function() {
+        const courseId = document.getElementById('course-id').value.trim();
+        const lessonId = document.getElementById('lesson-id').value.trim();
+        const audioUrl = formatDropboxUrl(document.getElementById('audio-url').value.trim());
+        const vttUrl = formatDropboxUrl(document.getElementById('vtt-url').value.trim());
+        const integrationType = document.getElementById('integration-version').value;
+        
+        // Validate required fields
+        if (!audioUrl || !vttUrl) {
+          alert('Please provide both Audio URL and VTT URL');
+          return;
+        }
+        
+        let embedCode = '';
+        
+        // Create different embed codes based on selected integration type
+        switch (integrationType) {
+          case 'enhanced':
+            embedCode = `<!-- Dictation Exercise - Course ${courseId || 'ID'}, Lesson ${lessonId || 'ID'} -->
+<div class="dictation-app-container" 
+     data-course-id="${courseId}" 
+     data-lesson-id="${lessonId}" 
+     data-audio-url="${audioUrl}"
+     data-vtt-url="${vttUrl}">
+</div>
+
+<!-- Teachable Integration Script (Enhanced Version) -->
+<script src="https://smarter-german-org.github.io/NEW-DICTATION-CHECKER/teachable-integration-updated.js"></script>`;
+            break;
+            
+          case 'direct':
+            embedCode = `<!-- Dictation Exercise - Course ${courseId || 'ID'}, Lesson ${lessonId || 'ID'} -->
+<iframe 
+    src="https://smarter-german-org.github.io/NEW-DICTATION-CHECKER/embed.html?audio=${encodeURIComponent(audioUrl)}&vtt=${encodeURIComponent(vttUrl)}&course=${encodeURIComponent(courseId)}&lesson=${encodeURIComponent(lessonId)}"
+    style="width: 100%; height: 680px; border: none; border-radius: 8px;"
+    allow="autoplay; fullscreen">
+</iframe>`;
+            break;
+            
+          default: // standard
+            embedCode = `<!-- Dictation Exercise - Course ${courseId || 'ID'}, Lesson ${lessonId || 'ID'} -->
+<div class="dictation-app-container" 
+     data-course-id="${courseId}" 
+     data-lesson-id="${lessonId}" 
+     data-audio-url="${audioUrl}"
+     data-vtt-url="${vttUrl}">
+</div>
+
+<!-- Teachable Integration Script (Standard) -->
+<script src="https://smarter-german-org.github.io/NEW-DICTATION-CHECKER/teachable-integration.js"></script>`;
+        }
+        
+        // Display the code
+        codeOutput.textContent = embedCode;
+        outputSection.style.display = 'block';
+        
+        // Generate preview
+        previewContainer.innerHTML = embedCode;
+        
+        // Show the embed code tab
+        document.querySelector('.tab[data-tab="embed-code"]').click();
+      });
+      
+      // Copy to clipboard
+      copyBtn.addEventListener('click', function() {
+        const textToCopy = codeOutput.textContent;
+        navigator.clipboard.writeText(textToCopy).then(
+          function() {
+            copyBtn.textContent = 'Copied!';
+            setTimeout(function() {
+              copyBtn.textContent = 'Copy to Clipboard';
+            }, 2000);
+          },
+          function() {
+            alert('Failed to copy. Please select and copy the code manually.');
+          }
+        );
+      });
+      
+      // Tab switching
+      tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          // Remove active class from all tabs
+          tabs.forEach(t => t.classList.remove('active'));
+          // Add active class to clicked tab
+          this.classList.add('active');
+          
+          // Hide all tab content
+          document.getElementById('embed-code-tab').style.display = 'none';
+          document.getElementById('preview-tab').style.display = 'none';
+          
+          // Show selected tab content
+          const tabName = this.getAttribute('data-tab');
+          if (tabName === 'embed-code') {
+            document.getElementById('embed-code-tab').style.display = 'block';
+          } else if (tabName === 'preview') {
+            document.getElementById('preview-tab').style.display = 'block';
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

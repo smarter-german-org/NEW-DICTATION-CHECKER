@@ -1,4 +1,0 @@
-CourseID,LessonID,AudioURL,VTTURL
-A1,L01,https://www.dropbox.com/scl/fi/u84y1qqu7ny43x3rug8w0/NEW-A1-Merkels-Moepse-L01.mp3?rlkey=spk382yq3vl0od5ej2byb8f19&st=2uvzzpg0&dl=0,https://www.dropbox.com/path/to/your/vtt/file.vtt
-A1,L02,https://www.dropbox.com/path/to/audio/file.mp3,https://www.dropbox.com/path/to/your/vtt/file.vtt
-A1,L03,https://www.dropbox.com/path/to/audio/file.mp3,https://www.dropbox.com/path/to/your/vtt/file.vtt
