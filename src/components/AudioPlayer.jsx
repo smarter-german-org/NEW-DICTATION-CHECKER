@@ -11,7 +11,8 @@ const AudioPlayer = forwardRef(({
   onPrevious = () => {},
   onNext = () => {},
   onCancel = () => {},
-  onRepeat = () => {}
+  onRepeat = () => {},
+  vttSegments = [] // Add this new prop to receive VTT segments
 }, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -367,6 +368,20 @@ const AudioPlayer = forwardRef(({
                 className="progress-fill" 
                 style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
               ></div>
+              
+              {/* Add VTT segment markers */}
+              {vttSegments.map((segment, index) => (
+                <div 
+                  key={index}
+                  className="vtt-segment-marker"
+                  style={{
+                    left: `${(segment.startTime / duration) * 100 || 0}%`,
+                    backgroundColor: currentTime >= segment.startTime && currentTime <= segment.endTime ? 
+                      '#FFD700' : '#FFFFFF'
+                  }}
+                  title={segment.text}
+                />
+              ))}
             </div>
             <div className="time-display">
               {formatTime(currentTime)} / {formatTime(duration)}

@@ -1684,6 +1684,7 @@ const DictationTool = forwardRef(({ exerciseId = 1, isMobile = false, hideShortc
           onNext={() => goToNextSentence(true)}
           onCancel={handleAudioCancel} // Use the explicit handler
           onRepeat={repeatCurrentSentence}
+          vttSegments={sentences} // Pass the parsed VTT segments here
         />
       </div>
       
