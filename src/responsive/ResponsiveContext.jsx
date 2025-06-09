@@ -10,6 +10,13 @@ export const ResponsiveProvider = ({ children }) => {
     typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false
   );
   
+  // Add device type state
+  const [deviceType, setDeviceType] = useState({
+    isMobile: typeof window !== 'undefined' ? window.matchMedia('(max-width: 767px)').matches : false,
+    isTablet: typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px) and (max-width: 1023px)').matches : false,
+    isDesktop: typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : false
+  });
+  
   // Use media query for more reliable detection
   useEffect(() => {
     // Create media query list
@@ -57,7 +64,7 @@ export const ResponsiveProvider = ({ children }) => {
   
   // Provide the context value
   return (
-    <ResponsiveContext.Provider value={{ isMobile }}>
+    <ResponsiveContext.Provider value={{ isMobile, deviceType }}>
       {children}
     </ResponsiveContext.Provider>
   );
